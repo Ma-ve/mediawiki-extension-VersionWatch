@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Part of the version to increment
+        type: choice
+        options: [ patch, minor, major ]
+        default: patch
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+          coverage: none
+
+      - run: composer install --no-progress
+
+      - run: composer test
+
+      - name: Bump version in extension.json
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          current=$(jq -r .version extension.json)
+          IFS=. read -r major minor patch <<< "$current"
+          case "$BUMP" in
+            major) version="$((major + 1)).0.0" ;;
+            minor) version="$major.$((minor + 1)).0" ;;
+            patch) version="$major.$minor.$((patch + 1))" ;;
+          esac
+          # Edit the line in place rather than through jq, to keep the file's formatting.
+          sed -i "s/\"version\": \"$current\"/\"version\": \"$version\"/" extension.json
+          if [ "$(jq -r .version extension.json)" != "$version" ]; then
+            echo "::error::Could not set the version in extension.json to $version"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and tag
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -am "chore: release $VERSION"
+          git tag -a "v$VERSION" -m "VersionWatch $VERSION"
+          git push origin HEAD:main "v$VERSION"
+
+      - name: Package
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git archive --format=zip --prefix=VersionWatch/ -o "VersionWatch-$VERSION.zip" "v$VERSION"
+          mkdir dist
+          unzip -q "VersionWatch-$VERSION.zip" -d dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VersionWatch-${{ steps.version.outputs.version }}
+          path: dist/
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "v$VERSION" "VersionWatch-$VERSION.zip" \
+            --title "VersionWatch $VERSION" \
+            --generate-notes
