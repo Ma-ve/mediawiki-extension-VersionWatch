@@ -156,7 +156,7 @@ class SpecialVersionWatch extends SpecialPage {
 			$component = $result->component;
 			$cells = Html::element( 'td', [], $component->name ) .
 				Html::element( 'td', [], $this->formatRevision(
-					$component->version, $component->commit, $component->commitDate
+					$component->version, $component->commit, $component->commitDate, $component->bundledWith
 				) ) .
 				Html::element( 'td', [], $this->formatRevision( $result->latest, null, $result->latestDate ) ) .
 				Html::rawElement( 'td', [], $this->formatStatus( $result->status ) ) .
@@ -176,13 +176,21 @@ class SpecialVersionWatch extends SpecialPage {
 	/**
 	 * Format a version and/or commit like Special:Version does: "1.8.1 (ced83f8, 23 September 2019)".
 	 */
-	private function formatRevision( ?string $version, ?string $commit, ?string $date ): string {
+	private function formatRevision(
+		?string $version,
+		?string $commit,
+		?string $date,
+		?string $bundledWith = null
+	): string {
 		$details = [];
 		if ( $commit !== null ) {
 			$details[] = substr( $commit, 0, 7 );
 		}
 		if ( $date !== null ) {
 			$details[] = $this->getLanguage()->userDate( $date, $this->getUser() );
+		}
+		if ( $bundledWith !== null ) {
+			$details[] = $this->msg( 'versionwatch-bundled-with', $bundledWith )->text();
 		}
 
 		if ( $version === null && !$details ) {

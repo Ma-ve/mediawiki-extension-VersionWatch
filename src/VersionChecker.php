@@ -26,9 +26,13 @@ class VersionChecker {
 		$gerritTargets = [];
 		$gitHubTargets = [];
 		$notChecked = [];
+		$coreVersion = null;
 		$resolver = $this->repositorySettings->getResolver();
 
 		foreach ( $this->installedComponents->get() as $component ) {
+			if ( $component->type === Component::CORE ) {
+				$coreVersion = $component->version;
+			}
 			if ( $component->isPlatform() ) {
 				$platform[] = $component;
 				continue;
@@ -48,6 +52,10 @@ class VersionChecker {
 			}
 		}
 
+		if ( $coreVersion !== null ) {
+			$gerritTargets = $this->withBundledCommits( $gerritTargets, $coreVersion );
+		}
+
 		return new Report(
 			ConvertibleTimestamp::now( TS_MW ),
 			array_merge(
@@ -57,5 +65,29 @@ class VersionChecker {
 				$notChecked
 			)
 		);
+	}
+
+	/**
+	 * Extensions and skins that came with the MediaWiki download have no git information,
+	 * but the release pins the commit of each, so compare that commit instead.
+	 *
+	 * @param array<int,array{0:Component,1:Repository}> $targets
+	 * @param string $mwVersion
+	 * @return array<int,array{0:Component,1:Repository}>
+	 */
+	private function withBundledCommits( array $targets, string $mwVersion ): array {
+		$withoutCommit = array_filter( $targets, static fn ( array $target ) => $target[0]->commit === null );
+		if ( !$withoutCommit ) {
+			return $targets;
+		}
+
+		$bundled = $this->gerritSource->getBundledCommits( $mwVersion );
+		foreach ( $withoutCommit as $i => [ $component, $repository ] ) {
+			$commit = $bundled[$component->type][$component->name] ?? null;
+			if ( $commit !== null ) {
+				$targets[$i] = [ $component->withBundledCommit( $commit, $mwVersion ), $repository ];
+			}
+		}
+		return $targets;
 	}
 }

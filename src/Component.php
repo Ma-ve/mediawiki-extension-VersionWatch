@@ -21,6 +21,8 @@ class Component {
 	 * @param string|null $version Installed version, if the software declares one
 	 * @param string|null $commit Full SHA-1 of the checked out commit, if installed from git
 	 * @param string|null $commitDate Commit date in TS_MW format
+	 * @param string|null $bundledWith MediaWiki version whose download $commit was taken from,
+	 *  for extensions and skins without git information of their own
 	 */
 	public function __construct(
 		public readonly string $type,
@@ -28,7 +30,18 @@ class Component {
 		public readonly ?string $version = null,
 		public readonly ?string $commit = null,
 		public readonly ?string $commitDate = null,
+		public readonly ?string $bundledWith = null,
 	) {
+	}
+
+	/**
+	 * A copy that assumes this is the copy bundled with a MediaWiki release.
+	 *
+	 * @param string $commit Commit pinned by that release
+	 * @param string $mwVersion
+	 */
+	public function withBundledCommit( string $commit, string $mwVersion ): self {
+		return new self( $this->type, $this->name, $this->version, $commit, null, $mwVersion );
 	}
 
 	public function isPlatform(): bool {
@@ -49,6 +62,7 @@ class Component {
 			'version' => $this->version,
 			'commit' => $this->commit,
 			'commitDate' => $this->commitDate,
+			'bundledWith' => $this->bundledWith,
 		];
 	}
 
@@ -59,6 +73,8 @@ class Component {
 			$data['version'],
 			$data['commit'],
 			$data['commitDate'],
+			// Not present in reports stored before this was added
+			$data['bundledWith'] ?? null,
 		);
 	}
 }

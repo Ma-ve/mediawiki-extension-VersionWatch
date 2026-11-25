@@ -63,7 +63,9 @@ class CheckVersions extends Maintenance {
 			$component = $result->component;
 			$installed = $component->version ?? '-';
 			if ( $component->commit !== null ) {
-				$installed .= ' (' . substr( $component->commit, 0, 7 ) . ')';
+				$installed .= ' (' . substr( $component->commit, 0, 7 )
+					. ( $component->bundledWith !== null ? ", bundled with {$component->bundledWith}" : '' )
+					. ')';
 			}
 			$rows[] = [
 				$result->status,

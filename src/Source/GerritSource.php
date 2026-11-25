@@ -3,6 +3,7 @@
 namespace MediaWiki\Extension\VersionWatch\Source;
 
 use DateTimeImmutable;
+use MediaWiki\Extension\VersionWatch\Component;
 use MediaWiki\Extension\VersionWatch\Repository;
 use Wikimedia\Timestamp\ConvertibleTimestamp;
 
@@ -20,6 +21,45 @@ class GerritSource extends GitSource {
 
 	/** Enough to list everything a checkout is behind in one request, even years-old ones. */
 	private const LOG_LIMIT = 10000;
+
+	/**
+	 * The commits of the extensions and skins bundled with a MediaWiki release.
+	 *
+	 * The release tag in mediawiki/core includes them as submodules, pinned to the exact
+	 * commit that went into the download.
+	 *
+	 * @param string $mwVersion Release version, such as "1.43.12"
+	 * @return array<string,array<string,string>> Commit SHA-1s by name, keyed by
+	 *  Component::EXTENSION and Component::SKIN. Empty if the version has no release tag,
+	 *  such as a development version, or if the lookup failed.
+	 */
+	public function getBundledCommits( string $mwVersion ): array {
+		$requests = [];
+		foreach ( [ Component::EXTENSION => 'extensions', Component::SKIN => 'skins' ] as $type => $dir ) {
+			$requests[$type] = $this->request( 'mediawiki/core', "+/refs/tags/$mwVersion/$dir?format=JSON" );
+		}
+		$responses = $this->httpRequestFactory->createMultiClient()->runMulti( $requests );
+
+		$commits = [];
+		foreach ( $responses as $type => $request ) {
+			$commits[$type] = [];
+			if ( $request['response']['code'] !== 200 ) {
+				continue;
+			}
+			try {
+				$entries = $this->decodeJson( $request['response'] )['entries'] ?? [];
+			} catch ( LookupFailure ) {
+				continue;
+			}
+			foreach ( $entries as $entry ) {
+				// Submodules are listed as entries of type "commit"; the rest are files.
+				if ( ( $entry['type'] ?? null ) === 'commit' ) {
+					$commits[$type][$entry['name']] = $entry['id'];
+				}
+			}
+		}
+		return $commits;
+	}
 
 	protected function getHostName(): string {
 		return self::HOST;
