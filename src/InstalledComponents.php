@@ -60,10 +60,12 @@ class InstalledComponents {
 	 */
 	private function getGitInfo( string $dir ): array {
 		$gitInfo = new GitInfo( $dir );
-		$sha = $gitInfo->getHeadSHA1();
+		// ExtensionDistributor writes gitinfo.json with the trailing newline of `git rev-parse`,
+		// and GitInfo returns it as is.
+		$sha = trim( (string)$gitInfo->getHeadSHA1() );
 		$date = $gitInfo->getHeadCommitDate();
 		return [
-			$sha ?: null,
+			GitInfo::isSHA1( $sha ) ? $sha : null,
 			$date ? ConvertibleTimestamp::convert( TS_MW, $date ) : null,
 		];
 	}
