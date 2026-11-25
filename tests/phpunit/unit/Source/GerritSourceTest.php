@@ -162,4 +162,38 @@ class GerritSourceTest extends MediaWikiUnitTestCase {
 
 		$this->assertSame( CheckResult::CURRENT, $results[0]->status );
 	}
+
+	public function testBundledCommits() {
+		$base = 'https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/core/+/refs/tags/1.43.12';
+		$source = new GerritSource( $this->newHttpRequestFactory( [
+			"$base/extensions?format=JSON" => self::gitilesJson( [ 'entries' => [
+				[ 'type' => 'blob', 'name' => '.gitignore', 'id' => 'df80c2a660b7069b6f9db8c91a2d9cd88e6a08fb' ],
+				[ 'type' => 'commit', 'name' => 'Cite', 'id' => '77ddf98f9ea40e8baf57660ff5ae760831f6700a' ],
+			] ] ),
+			"$base/skins?format=JSON" => self::gitilesJson( [ 'entries' => [
+				[ 'type' => 'commit', 'name' => 'Vector', 'id' => '31a11ab6c9a9e39539b2a2d220a964ff20ccac4f' ],
+			] ] ),
+		] ), [] );
+
+		$this->assertSame(
+			[
+				Component::EXTENSION => [ 'Cite' => '77ddf98f9ea40e8baf57660ff5ae760831f6700a' ],
+				Component::SKIN => [ 'Vector' => '31a11ab6c9a9e39539b2a2d220a964ff20ccac4f' ],
+			],
+			$source->getBundledCommits( '1.43.12' )
+		);
+	}
+
+	public function testNoBundledCommitsWithoutReleaseTag() {
+		$base = 'https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/core/+/refs/tags/1.44.0-alpha';
+		$source = new GerritSource( $this->newHttpRequestFactory( [
+			"$base/extensions?format=JSON" => [ 'code' => 404 ],
+			"$base/skins?format=JSON" => [ 'code' => 404 ],
+		] ), [] );
+
+		$this->assertSame(
+			[ Component::EXTENSION => [], Component::SKIN => [] ],
+			$source->getBundledCommits( '1.44.0-alpha' )
+		);
+	}
 }

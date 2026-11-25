@@ -37,7 +37,7 @@ class ReportTest extends MediaWikiUnitTestCase {
 	public function testArrayRoundTrip() {
 		$report = new Report( '20261125000000', [
 			new CheckResult(
-				new Component( Component::EXTENSION, 'Echo', '1.0', 'edd9090', '20220609072700' ),
+				new Component( Component::EXTENSION, 'Echo', '1.0', 'edd9090', '20220609072700', '1.43.12' ),
 				CheckResult::OUTDATED,
 				'f6d697b',
 				'20261124043535',
@@ -48,5 +48,17 @@ class ReportTest extends MediaWikiUnitTestCase {
 		] );
 
 		$this->assertEquals( $report, Report::newFromArray( $report->toArray() ) );
+	}
+
+	public function testReadsReportsStoredBeforeBundledWithExisted() {
+		$component = [
+			'type' => 'extension',
+			'name' => 'Echo',
+			'version' => null,
+			'commit' => null,
+			'commitDate' => null,
+		];
+
+		$this->assertNull( Component::newFromArray( $component )->bundledWith );
 	}
 }
