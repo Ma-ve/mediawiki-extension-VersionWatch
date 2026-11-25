@@ -93,3 +93,12 @@ Unit tests run from the core directory:
 ```
 php vendor/bin/phpunit extensions/VersionWatch/tests/phpunit/unit
 ```
+
+## Releases
+
+Every push to `main` runs the checks and uploads the extension as a build artifact.
+
+To release, run the *Release* workflow from the Actions tab and choose which part of the
+version to increment. It updates `version` in `extension.json`, commits and tags that
+change on `main`, and attaches `VersionWatch-<version>.zip` to a new GitHub release.
+Development files are left out of the zip through `.gitattributes`.
