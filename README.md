@@ -41,26 +41,32 @@ version, so they show as *Unknown*. They are updated whenever MediaWiki is.
 The report is kept in the main object stash, so viewing the special page never waits on
 remote requests.
 
-## Configuration
+## Where extensions are looked up
 
-### `$wgVersionWatchRepositories`
+By default an extension or skin is looked up on Wikimedia Gerrit, on the release branch
+matching your MediaWiki version. For anything else, such as an extension hosted on GitHub,
+one that is only maintained on master, or local code without an upstream, use the *change*
+link in the Repository column of `Special:VersionWatch`. The details column says when that
+is needed.
 
-Extensions not hosted on Wikimedia Gerrit, or that use a different branch, need an entry here.
-Entries are keyed by the name you pass to `wfLoadExtension()`.
+Settings are saved as JSON on `MediaWiki:VersionWatch.json`, so every change appears in
+recent changes and the page history, and can be reverted. Anyone who can edit that page can
+change them; by default that is sysops and interface administrators. The page can also be
+edited by hand:
 
-```php
-$wgVersionWatchRepositories = [
-	// Hosted on GitHub; compared against the default branch unless 'branch' is set
-	'GTag' => [ 'github' => 'owner/GTag' ],
-	// On Gerrit, but only maintained on master
-	'SomeExtension' => [ 'branch' => 'master' ],
-	// A local fork with no upstream to compare against
-	'MaveVariables' => false,
-];
+```json
+{
+	"GTag": { "github": "owner/GTag" },
+	"MaveVariables": false,
+	"SomeExtension": { "branch": "master" }
+}
 ```
 
-`Special:VersionWatch` explains when an entry is needed, for example when a repository
-cannot be found or has no release branch.
+Each entry is keyed by the name passed to `wfLoadExtension()` and is either `false` (do not
+check) or an object with `gerrit` or `github` (the repository path) and/or `branch`. On GitHub
+the default branch is used unless `branch` is set.
+
+## Configuration
 
 ### `$wgVersionWatchGitHubToken`
 
@@ -88,10 +94,10 @@ composer test        # lint, code style, executable bits
 composer phan        # static analysis; needs MW_INSTALL_PATH pointing at core
 ```
 
-Unit tests run from the core directory:
+Tests run from the core directory. The integration tests need an installed wiki:
 
 ```
-php vendor/bin/phpunit extensions/VersionWatch/tests/phpunit/unit
+php vendor/bin/phpunit extensions/VersionWatch/tests/phpunit
 ```
 
 ## Releases
