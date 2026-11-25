@@ -22,4 +22,14 @@ class Repository {
 		public readonly string $branch,
 	) {
 	}
+
+	/**
+	 * Where to browse the branch in a web browser.
+	 */
+	public function getWebUrl(): string {
+		if ( $this->host === self::GITHUB ) {
+			return "https://github.com/{$this->path}" . ( $this->branch === 'HEAD' ? '' : "/tree/{$this->branch}" );
+		}
+		return "https://gerrit.wikimedia.org/r/plugins/gitiles/{$this->path}/+/refs/heads/{$this->branch}";
+	}
 }

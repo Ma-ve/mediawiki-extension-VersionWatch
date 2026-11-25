@@ -33,7 +33,9 @@
 			"class": "MediaWiki\\Extension\\VersionWatch\\Specials\\SpecialVersionWatch",
 			"services": [
 				"VersionWatch.VersionChecker",
-				"VersionWatch.ReportStore"
+				"VersionWatch.ReportStore",
+				"VersionWatch.InstalledComponents",
+				"VersionWatch.RepositorySettings"
 			]
 		}
 	},
