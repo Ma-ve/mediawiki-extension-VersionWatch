@@ -2,6 +2,7 @@
 
 namespace MediaWiki\Extension\VersionWatch\Tests\Unit;
 
+use MediaWiki\Extension\VersionWatch\CheckResult;
 use MediaWiki\Extension\VersionWatch\Component;
 use MediaWiki\Extension\VersionWatch\InstalledComponents;
 use MediaWiki\Extension\VersionWatch\RepositoryResolver;
@@ -108,5 +109,44 @@ class VersionCheckerTest extends MediaWikiUnitTestCase {
 			$gerritSource,
 			$this->createMock( GitHubSource::class )
 		) )->run();
+	}
+
+	public function testModuleGetsStatusOfContainingExtension() {
+		$confirmEdit = new Component( Component::EXTENSION, 'ConfirmEdit', '1.6.0', self::ECHO_COMMIT );
+		$turnstile = new Component(
+			Component::EXTENSION, 'ConfirmEdit/Turnstile', null, null, null, null, 'ConfirmEdit'
+		);
+
+		$installedComponents = $this->createMock( InstalledComponents::class );
+		$installedComponents->method( 'get' )->willReturn( [
+			new Component( Component::CORE, 'MediaWiki', '1.43.12' ),
+			$confirmEdit,
+			$turnstile,
+		] );
+		$repositorySettings = $this->createMock( RepositorySettings::class );
+		$repositorySettings->method( 'getResolver' )->willReturn( new RepositoryResolver( [], 'REL1_43' ) );
+		$gerritSource = $this->createMock( GerritSource::class );
+		$gerritSource->method( 'check' )->willReturnCallback( function ( array $targets ) use ( $confirmEdit ) {
+			$this->assertSame( [ 'ConfirmEdit' ], array_map( static fn ( $t ) => $t[0]->name, $targets ),
+				'The module is not looked up on its own' );
+			return [ new CheckResult( $confirmEdit, CheckResult::OUTDATED, 'd928e44', '20261124000000' ) ];
+		} );
+
+		$report = ( new VersionChecker(
+			$installedComponents,
+			$repositorySettings,
+			$this->createMock( ReleaseCycleSource::class ),
+			$gerritSource,
+			$this->createMock( GitHubSource::class )
+		) )->run();
+
+		$result = array_values( array_filter(
+			$report->results,
+			static fn ( CheckResult $r ) => $r->component === $turnstile
+		) )[0];
+		$this->assertSame( CheckResult::OUTDATED, $result->status );
+		$this->assertSame( 'd928e44', $result->latest );
+		$this->assertSame( 'versionwatch-note-part-of', $result->note );
+		$this->assertSame( [ 'ConfirmEdit' ], $result->noteParams );
 	}
 }
