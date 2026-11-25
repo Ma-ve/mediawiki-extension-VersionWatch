@@ -1,0 +1,38 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+          coverage: none
+
+      - run: composer install --no-progress
+
+      - run: composer test
+
+      - name: Package
+        id: package
+        run: |
+          mkdir dist
+          git archive --format=tar --prefix=VersionWatch/ HEAD | tar -x -C dist
+          echo "name=VersionWatch-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      # The artifact is downloaded as a zip containing the VersionWatch directory.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.name }}
+          path: dist/
