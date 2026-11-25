@@ -1,0 +1,23 @@
+{
+	"@metadata": {
+		"authors": [
+			"Mave"
+		]
+	},
+	"versionwatch-desc": "Checks MediaWiki, PHP, the database server, extensions and skins for available updates",
+	"versionwatch-note-request-failed": "Could not reach $1: $2.",
+	"versionwatch-note-bad-response": "$1 returned a response that could not be read.",
+	"versionwatch-note-unknown-product": "No release information is available for this software.",
+	"versionwatch-note-unknown-cycle": "No release branch matches version $1.",
+	"versionwatch-note-supported-until": "This release branch is supported until $1.",
+	"versionwatch-note-eol-passed": "Support for this release branch ended on $1.",
+	"versionwatch-note-eol": "This release branch is no longer supported.",
+	"versionwatch-note-commits-behind": "$1 {{PLURAL:$1|commit|commits}} behind the $2 branch.",
+	"versionwatch-note-only-ignored-commits": "Behind only by {{PLURAL:$1|one commit|$1 commits}} from ignored authors, such as translation updates.",
+	"versionwatch-note-no-branch": "The upstream repository has no $1 branch. The extension may be unmaintained, or use a different branch; you can set one in <code>$wgVersionWatchRepositories</code>.",
+	"versionwatch-note-repo-not-found": "Repository $1 was not found on $2. Set where it lives in <code>$wgVersionWatchRepositories</code>, or set it to <code>false</code> to skip it.",
+	"versionwatch-note-commit-not-found": "The installed commit $1 does not exist upstream. This may be a fork or a local change.",
+	"versionwatch-note-no-version": "Not installed from git and declares no version. If it came with the MediaWiki download, it is updated together with MediaWiki.",
+	"versionwatch-note-no-upstream-version": "The upstream branch declares no version to compare with.",
+	"versionwatch-note-github-rate-limit": "The GitHub rate limit was reached. Set <code>$wgVersionWatchGitHubToken</code> to raise it."
+}

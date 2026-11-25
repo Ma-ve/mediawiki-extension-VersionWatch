@@ -1,0 +1,45 @@
+{
+	"name": "VersionWatch",
+	"version": "1.0.0",
+	"author": [
+		"Mave"
+	],
+	"url": "https://www.mediawiki.org/wiki/Extension:VersionWatch",
+	"descriptionmsg": "versionwatch-desc",
+	"license-name": "GPL-2.0-or-later",
+	"type": "other",
+	"requires": {
+		"MediaWiki": ">= 1.43.0"
+	},
+	"AutoloadNamespaces": {
+		"MediaWiki\\Extension\\VersionWatch\\": "src/"
+	},
+	"TestAutoloadNamespaces": {
+		"MediaWiki\\Extension\\VersionWatch\\Tests\\": "tests/phpunit/"
+	},
+	"MessagesDirs": {
+		"VersionWatch": [
+			"i18n"
+		]
+	},
+	"ServiceWiringFiles": [
+		"src/ServiceWiring.php"
+	],
+	"config": {
+		"VersionWatchRepositories": {
+			"description": "Where to look up each extension or skin, keyed by its directory name. Set an entry to false to skip it, or to an array with 'gerrit' or 'github' (the repository path) and/or 'branch'. Anything not listed is looked up on Wikimedia Gerrit on the release branch matching this MediaWiki version.",
+			"value": {}
+		},
+		"VersionWatchGitHubToken": {
+			"description": "Optional GitHub token. Unauthenticated requests are limited to 60 per hour per IP address, which shared hosting may already use up.",
+			"value": null
+		},
+		"VersionWatchIgnoredAuthors": {
+			"description": "Commit authors whose commits do not count towards an extension being outdated, such as the bot that syncs translations every day.",
+			"value": [
+				"Translation updater bot"
+			]
+		}
+	},
+	"manifest_version": 2
+}

@@ -1,0 +1,76 @@
+<?php
+
+namespace MediaWiki\Extension\VersionWatch;
+
+/**
+ * The outcome of checking one component against its upstream.
+ */
+class CheckResult {
+
+	public const CURRENT = 'current';
+	public const OUTDATED = 'outdated';
+	public const UNSUPPORTED = 'unsupported';
+	public const UNKNOWN = 'unknown';
+	public const SKIPPED = 'skipped';
+
+	/** Statuses ordered from most to least urgent. */
+	public const SEVERITY_ORDER = [
+		self::UNSUPPORTED,
+		self::OUTDATED,
+		self::UNKNOWN,
+		self::CURRENT,
+		self::SKIPPED,
+	];
+
+	/**
+	 * @param Component $component
+	 * @param string $status One of the class constants
+	 * @param string|null $latest Latest version, or abbreviated commit of the branch head
+	 * @param string|null $latestDate Release or commit date of $latest in TS_MW format
+	 * @param string|null $eol End of support date (Y-m-d) of the installed release branch
+	 * @param string|null $note Message key explaining the status
+	 * @param array $noteParams Scalar parameters for $note
+	 */
+	public function __construct(
+		public readonly Component $component,
+		public readonly string $status,
+		public readonly ?string $latest = null,
+		public readonly ?string $latestDate = null,
+		public readonly ?string $eol = null,
+		public readonly ?string $note = null,
+		public readonly array $noteParams = [],
+	) {
+	}
+
+	public static function unknown( Component $component, string $note, array $noteParams = [] ): self {
+		return new self( $component, self::UNKNOWN, null, null, null, $note, $noteParams );
+	}
+
+	public function needsAttention(): bool {
+		return $this->status === self::OUTDATED || $this->status === self::UNSUPPORTED;
+	}
+
+	public function toArray(): array {
+		return [
+			'component' => $this->component->toArray(),
+			'status' => $this->status,
+			'latest' => $this->latest,
+			'latestDate' => $this->latestDate,
+			'eol' => $this->eol,
+			'note' => $this->note,
+			'noteParams' => $this->noteParams,
+		];
+	}
+
+	public static function newFromArray( array $data ): self {
+		return new self(
+			Component::newFromArray( $data['component'] ),
+			$data['status'],
+			$data['latest'],
+			$data['latestDate'],
+			$data['eol'],
+			$data['note'],
+			$data['noteParams'],
+		);
+	}
+}

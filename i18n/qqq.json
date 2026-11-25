@@ -1,0 +1,23 @@
+{
+	"@metadata": {
+		"authors": [
+			"Mave"
+		]
+	},
+	"versionwatch-desc": "{{desc|name=VersionWatch|url=https://www.mediawiki.org/wiki/Extension:VersionWatch}}",
+	"versionwatch-note-request-failed": "Parameters:\n* $1 - host name, such as gerrit.wikimedia.org\n* $2 - error, such as \"HTTP 500\" or a connection error from cURL",
+	"versionwatch-note-bad-response": "Parameters:\n* $1 - host name",
+	"versionwatch-note-unknown-product": "Shown for a database server type that has no release data.",
+	"versionwatch-note-unknown-cycle": "Parameters:\n* $1 - installed version",
+	"versionwatch-note-supported-until": "Parameters:\n* $1 - date in YYYY-MM-DD format",
+	"versionwatch-note-eol-passed": "Parameters:\n* $1 - date in YYYY-MM-DD format",
+	"versionwatch-note-eol": "Shown when a release branch is unsupported but no end date is known.",
+	"versionwatch-note-commits-behind": "Parameters:\n* $1 - number of commits\n* $2 - branch name, such as REL1_43",
+	"versionwatch-note-only-ignored-commits": "Shown when all newer commits are from authors such as the translation bot, which do not count as updates.\n\nParameters:\n* $1 - number of commits",
+	"versionwatch-note-no-branch": "Parameters:\n* $1 - branch name, such as REL1_43\n\nDo not translate <code>$wgVersionWatchRepositories</code>.",
+	"versionwatch-note-repo-not-found": "Parameters:\n* $1 - repository path\n* $2 - host name\n\nDo not translate <code>$wgVersionWatchRepositories</code> or <code>false</code>.",
+	"versionwatch-note-commit-not-found": "Parameters:\n* $1 - abbreviated commit hash",
+	"versionwatch-note-no-version": "Shown for an extension or skin that has neither git information nor a version number.",
+	"versionwatch-note-no-upstream-version": "Shown when the upstream extension.json or skin.json has no version to compare with.",
+	"versionwatch-note-github-rate-limit": "Do not translate <code>$wgVersionWatchGitHubToken</code>."
+}
