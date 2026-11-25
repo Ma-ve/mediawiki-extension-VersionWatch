@@ -43,7 +43,8 @@ class ReportTest extends MediaWikiUnitTestCase {
 				'20261124043535',
 				null,
 				'versionwatch-note-commits-behind',
-				[ 3, 'REL1_43' ]
+				[ 3, 'REL1_43' ],
+				'f6d697bd699652fd6c8196e06141e52fec2d025c'
 			),
 		] );
 

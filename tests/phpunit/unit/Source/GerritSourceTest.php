@@ -27,7 +27,12 @@ class GerritSourceTest extends MediaWikiUnitTestCase {
 		'committer' => [ 'time' => 'Tue Nov 24 05:35:35 2026 +0100' ],
 	];
 
+	/**
+	 * @param Component $component
+	 * @param array $responses Responses by URL; the branch's extension.json defaults to missing
+	 */
 	private function checkOne( Component $component, array $responses ): CheckResult {
+		$responses += [ self::MANIFEST_URL => [ 'code' => 404 ] ];
 		$source = new GerritSource( $this->newHttpRequestFactory( $responses ), [ 'Translation updater bot' ] );
 		$repository = new Repository( Repository::GERRIT, 'mediawiki/extensions/Echo', 'REL1_43' );
 		$results = $source->check( [ [ $component, $repository ] ] );
@@ -56,10 +61,12 @@ class GerritSourceTest extends MediaWikiUnitTestCase {
 		$result = $this->checkOne( self::gitCheckout(), [
 			self::HEAD_URL => self::gitilesJson( self::HEAD_RESPONSE ),
 			self::LOG_URL => self::logOf( 'Translation updater bot', 'Umherirrender', 'Translation updater bot' ),
+			self::MANIFEST_URL => [ 'body' => base64_encode( json_encode( [ 'version' => '1.2.0' ] ) ) ],
 		] );
 
 		$this->assertSame( CheckResult::OUTDATED, $result->status );
-		$this->assertSame( 'f6d697b', $result->latest );
+		$this->assertSame( '1.2.0', $result->latest, 'The version on the branch is shown' );
+		$this->assertSame( self::HEAD_RESPONSE['commit'], $result->latestCommit );
 		$this->assertSame( '20261124043535', $result->latestDate );
 		$this->assertSame( 'versionwatch-note-commits-behind', $result->note );
 		$this->assertSame( [ 1, 'REL1_43' ], $result->noteParams );
@@ -84,6 +91,8 @@ class GerritSourceTest extends MediaWikiUnitTestCase {
 
 		$this->assertSame( CheckResult::CURRENT, $result->status );
 		$this->assertNull( $result->note );
+		$this->assertNull( $result->latest, 'Without a version upstream, only the commit is known' );
+		$this->assertSame( self::HEAD_RESPONSE['commit'], $result->latestCommit );
 	}
 
 	public function testMissingBranch() {
@@ -127,6 +136,7 @@ class GerritSourceTest extends MediaWikiUnitTestCase {
 
 		$this->assertSame( CheckResult::OUTDATED, $result->status );
 		$this->assertSame( '0.5.4', $result->latest );
+		$this->assertSame( self::HEAD_RESPONSE['commit'], $result->latestCommit );
 	}
 
 	public function testUpstreamWithoutVersion() {

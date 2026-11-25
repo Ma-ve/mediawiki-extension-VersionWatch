@@ -129,7 +129,9 @@ class VersionCheckerTest extends MediaWikiUnitTestCase {
 		$gerritSource->method( 'check' )->willReturnCallback( function ( array $targets ) use ( $confirmEdit ) {
 			$this->assertSame( [ 'ConfirmEdit' ], array_map( static fn ( $t ) => $t[0]->name, $targets ),
 				'The module is not looked up on its own' );
-			return [ new CheckResult( $confirmEdit, CheckResult::OUTDATED, 'd928e44', '20261124000000' ) ];
+			return [ new CheckResult(
+				$confirmEdit, CheckResult::OUTDATED, '1.6.0', '20261124000000', null, null, [], self::CITE_COMMIT
+			) ];
 		} );
 
 		$report = ( new VersionChecker(
@@ -145,7 +147,8 @@ class VersionCheckerTest extends MediaWikiUnitTestCase {
 			static fn ( CheckResult $r ) => $r->component === $turnstile
 		) )[0];
 		$this->assertSame( CheckResult::OUTDATED, $result->status );
-		$this->assertSame( 'd928e44', $result->latest );
+		$this->assertSame( '1.6.0', $result->latest );
+		$this->assertSame( self::CITE_COMMIT, $result->latestCommit );
 		$this->assertSame( 'versionwatch-note-part-of', $result->note );
 		$this->assertSame( [ 'ConfirmEdit' ], $result->noteParams );
 	}

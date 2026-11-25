@@ -19,13 +19,19 @@ class GitHubSourceTest extends MediaWikiUnitTestCase {
 	private const LOCAL_COMMIT = '0123456789abcdef0123456789abcdef01234567';
 	private const HEAD_URL = 'https://api.github.com/repos/example/GTag/commits/HEAD';
 	private const COMPARE_URL = 'https://api.github.com/repos/example/GTag/compare/' . self::LOCAL_COMMIT . '...HEAD';
+	private const MANIFEST_URL = 'https://raw.githubusercontent.com/example/GTag/HEAD/extension.json';
 
 	private const HEAD_RESPONSE = [
 		'sha' => 'fedcba9876543210fedcba9876543210fedcba98',
 		'commit' => [ 'committer' => [ 'date' => '2026-11-01T12:00:00Z' ] ],
 	];
 
+	/**
+	 * @param array $responses Responses by URL; the branch's extension.json defaults to missing
+	 * @param string|null $token
+	 */
 	private function check( array $responses, ?string $token = null ): CheckResult {
+		$responses += [ self::MANIFEST_URL => [ 'code' => 404 ] ];
 		$source = new GitHubSource( $this->newHttpRequestFactory( $responses ), [ 'Translation updater bot' ], $token );
 		$results = $source->check( [ [
 			new Component( Component::EXTENSION, 'GTag', '1.3.0', self::LOCAL_COMMIT ),
@@ -52,7 +58,8 @@ class GitHubSourceTest extends MediaWikiUnitTestCase {
 		] );
 
 		$this->assertSame( CheckResult::OUTDATED, $result->status );
-		$this->assertSame( 'fedcba9', $result->latest );
+		$this->assertNull( $result->latest );
+		$this->assertSame( self::HEAD_RESPONSE['sha'], $result->latestCommit );
 		$this->assertSame( '20261101120000', $result->latestDate );
 		$this->assertSame( [ 298, 'HEAD' ], $result->noteParams );
 	}
@@ -64,6 +71,18 @@ class GitHubSourceTest extends MediaWikiUnitTestCase {
 		], 'secret' );
 
 		$this->assertSame( 'Bearer secret', $this->sentRequests[self::HEAD_URL]['headers']['Authorization'] );
+		$this->assertArrayNotHasKey( 'headers', $this->sentRequests[self::MANIFEST_URL] );
+	}
+
+	public function testVersionOnBranchIsShown() {
+		$result = $this->check( [
+			self::HEAD_URL => self::json( self::HEAD_RESPONSE ),
+			self::COMPARE_URL => self::json( [ 'ahead_by' => 0, 'commits' => [] ] ),
+			self::MANIFEST_URL => self::json( [ 'name' => 'GTag', 'version' => '1.4.0' ] ),
+		] );
+
+		$this->assertSame( CheckResult::CURRENT, $result->status, 'A git checkout is compared by commit' );
+		$this->assertSame( '1.4.0', $result->latest );
 	}
 
 	public function testRateLimit() {
