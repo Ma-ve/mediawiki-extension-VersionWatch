@@ -158,7 +158,9 @@ class SpecialVersionWatch extends SpecialPage {
 				Html::element( 'td', [], $this->formatRevision(
 					$component->version, $component->commit, $component->commitDate, $component->bundledWith
 				) ) .
-				Html::element( 'td', [], $this->formatRevision( $result->latest, null, $result->latestDate ) ) .
+				Html::element( 'td', [], $this->formatRevision(
+					$result->latest, $result->latestCommit, $result->latestDate
+				) ) .
 				Html::rawElement( 'td', [], $this->formatStatus( $result->status ) ) .
 				Html::rawElement( 'td', [], $this->formatNote( $result ) );
 			if ( $resolver ) {

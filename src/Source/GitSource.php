@@ -79,9 +79,9 @@ abstract class GitSource {
 			$requests["$i-head"] = $this->headRequest( $repository );
 			if ( $component->commit !== null ) {
 				$requests["$i-compare"] = $this->compareRequest( $repository, $component->commit );
-			} elseif ( $component->version !== null ) {
-				$requests["$i-manifest"] = $this->manifestRequest( $repository, $component->getManifestFile() );
 			}
+			// Also for git checkouts, to show which version the branch is at.
+			$requests["$i-manifest"] = $this->manifestRequest( $repository, $component->getManifestFile() );
 		}
 		$responses = $this->httpRequestFactory->createMultiClient()
 			->runMulti( $requests, [ 'maxConnsPerHost' => self::MAX_CONNECTIONS_PER_HOST ] );
@@ -115,19 +115,38 @@ abstract class GitSource {
 
 		if ( $component->commit !== null && $compareResponse !== null ) {
 			$behind = $this->parseCompare( $repository, $component->commit, $compareResponse );
-			return $this->evaluateCommits( $component, $repository, $head, $behind );
+			return $this->evaluateCommits(
+				$component, $repository, $head, $behind, $this->getUpstreamVersion( $manifestResponse )
+			);
 		}
-		if ( $manifestResponse !== null ) {
-			return $this->evaluateVersion( $component, $this->parseManifest( $manifestResponse ) );
+		if ( $component->version !== null && $manifestResponse !== null ) {
+			return $this->evaluateVersion( $component, $head, $this->parseManifest( $manifestResponse ) );
 		}
 		throw new LookupFailure( 'versionwatch-note-no-version' );
+	}
+
+	/**
+	 * The version on the branch, for display only: a git checkout is compared by commit,
+	 * and many extensions do not declare a version.
+	 */
+	private function getUpstreamVersion( ?array $manifestResponse ): ?string {
+		if ( $manifestResponse === null ) {
+			return null;
+		}
+		try {
+			$version = $this->parseManifest( $manifestResponse )['version'] ?? null;
+		} catch ( LookupFailure ) {
+			return null;
+		}
+		return is_string( $version ) ? $version : null;
 	}
 
 	private function evaluateCommits(
 		Component $component,
 		Repository $repository,
 		array $head,
-		array $behind
+		array $behind,
+		?string $upstreamVersion
 	): CheckResult {
 		$ignored = count( array_intersect( $behind['authors'], $this->ignoredAuthors ) );
 		$relevant = $behind['total'] - $ignored;
@@ -149,15 +168,16 @@ abstract class GitSource {
 		return new CheckResult(
 			$component,
 			$status,
-			substr( $head['sha'], 0, 7 ),
+			$upstreamVersion,
 			$head['date'],
 			null,
 			$note,
-			$params
+			$params,
+			$head['sha']
 		);
 	}
 
-	private function evaluateVersion( Component $component, array $manifest ): CheckResult {
+	private function evaluateVersion( Component $component, array $head, array $manifest ): CheckResult {
 		$latest = $manifest['version'] ?? null;
 		if ( !is_string( $latest ) ) {
 			throw new LookupFailure( 'versionwatch-note-no-upstream-version' );
@@ -165,7 +185,7 @@ abstract class GitSource {
 		$status = version_compare( (string)$component->version, $latest, '<' )
 			? CheckResult::OUTDATED
 			: CheckResult::CURRENT;
-		return new CheckResult( $component, $status, $latest );
+		return new CheckResult( $component, $status, $latest, $head['date'], null, null, [], $head['sha'] );
 	}
 
 	/**

@@ -71,7 +71,7 @@ class CheckVersions extends Maintenance {
 				$result->status,
 				$component->name,
 				$installed,
-				$result->latest ?? '-',
+				$result->latest ?? ( $result->latestCommit !== null ? substr( $result->latestCommit, 0, 7 ) : '-' ),
 				$this->formatNote( $result ),
 			];
 		}

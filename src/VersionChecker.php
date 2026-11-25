@@ -96,7 +96,8 @@ class VersionChecker {
 				$parent?->latestDate,
 				null,
 				'versionwatch-note-part-of',
-				[ $module->partOf ]
+				[ $module->partOf ],
+				$parent?->latestCommit
 			);
 		}, $modules );
 	}

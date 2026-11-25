@@ -25,11 +25,12 @@ class CheckResult {
 	/**
 	 * @param Component $component
 	 * @param string $status One of the class constants
-	 * @param string|null $latest Latest version, or abbreviated commit of the branch head
-	 * @param string|null $latestDate Release or commit date of $latest in TS_MW format
+	 * @param string|null $latest Latest version, if upstream declares one
+	 * @param string|null $latestDate Release date, or date of $latestCommit, in TS_MW format
 	 * @param string|null $eol End of support date (Y-m-d) of the installed release branch
 	 * @param string|null $note Message key explaining the status
 	 * @param array $noteParams Scalar parameters for $note
+	 * @param string|null $latestCommit Head of the branch an extension or skin is compared with
 	 */
 	public function __construct(
 		public readonly Component $component,
@@ -39,6 +40,7 @@ class CheckResult {
 		public readonly ?string $eol = null,
 		public readonly ?string $note = null,
 		public readonly array $noteParams = [],
+		public readonly ?string $latestCommit = null,
 	) {
 	}
 
@@ -59,6 +61,7 @@ class CheckResult {
 			'eol' => $this->eol,
 			'note' => $this->note,
 			'noteParams' => $this->noteParams,
+			'latestCommit' => $this->latestCommit,
 		];
 	}
 
@@ -71,6 +74,8 @@ class CheckResult {
 			$data['eol'],
 			$data['note'],
 			$data['noteParams'],
+			// Not present in reports stored before this was added
+			$data['latestCommit'] ?? null,
 		);
 	}
 }
