@@ -78,9 +78,9 @@ abstract class GitSource {
 		foreach ( $targets as $i => [ $component, $repository ] ) {
 			$requests["$i-head"] = $this->headRequest( $repository );
 			if ( $component->commit !== null ) {
-				$requests["$i-detail"] = $this->compareRequest( $repository, $component->commit );
+				$requests["$i-compare"] = $this->compareRequest( $repository, $component->commit );
 			} elseif ( $component->version !== null ) {
-				$requests["$i-detail"] = $this->manifestRequest( $repository, $component->getManifestFile() );
+				$requests["$i-manifest"] = $this->manifestRequest( $repository, $component->getManifestFile() );
 			}
 		}
 		$responses = $this->httpRequestFactory->createMultiClient()
@@ -93,7 +93,8 @@ abstract class GitSource {
 					$component,
 					$repository,
 					$responses["$i-head"]['response'],
-					$responses["$i-detail"]['response'] ?? null
+					$responses["$i-compare"]['response'] ?? null,
+					$responses["$i-manifest"]['response'] ?? null
 				);
 			} catch ( LookupFailure $e ) {
 				$results[] = CheckResult::unknown( $component, $e->messageKey, $e->messageParams );
@@ -106,20 +107,20 @@ abstract class GitSource {
 		Component $component,
 		Repository $repository,
 		array $headResponse,
-		?array $detailResponse
+		?array $compareResponse,
+		?array $manifestResponse
 	): CheckResult {
 		// Parse the head first: a missing repository or branch explains everything else.
 		$head = $this->parseHead( $repository, $headResponse );
 
-		// There is no second request only if there is neither a commit nor a version to compare.
-		if ( $detailResponse === null ) {
-			throw new LookupFailure( 'versionwatch-note-no-version' );
-		}
-		if ( $component->commit !== null ) {
-			$behind = $this->parseCompare( $repository, $component->commit, $detailResponse );
+		if ( $component->commit !== null && $compareResponse !== null ) {
+			$behind = $this->parseCompare( $repository, $component->commit, $compareResponse );
 			return $this->evaluateCommits( $component, $repository, $head, $behind );
 		}
-		return $this->evaluateVersion( $component, $this->parseManifest( $detailResponse ) );
+		if ( $manifestResponse !== null ) {
+			return $this->evaluateVersion( $component, $this->parseManifest( $manifestResponse ) );
+		}
+		throw new LookupFailure( 'versionwatch-note-no-version' );
 	}
 
 	private function evaluateCommits(
