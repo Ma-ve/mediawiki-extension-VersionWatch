@@ -33,6 +33,10 @@ Sysops can also run a check at any time with the button on `Special:VersionWatch
 | Extensions and skins that came with the MediaWiki download | The commit your MediaWiki release pinned them to, compared with the release branch like a git checkout | *Update available* if the branch has commits you do not have |
 | Other extensions and skins without git information | The `version` in `extension.json` or `skin.json` on that branch | *Update available* if upstream has a higher version |
 
+Modules that live inside another extension and are loaded as part of it, such as
+`ConfirmEdit/Turnstile`, have no repository of their own. They get the status of the
+extension they belong to.
+
 Commits from the translation bot land on every branch almost daily, so they do not count
 towards *Update available*. See `$wgVersionWatchIgnoredAuthors`.
 
