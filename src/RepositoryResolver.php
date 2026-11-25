@@ -5,17 +5,19 @@ namespace MediaWiki\Extension\VersionWatch;
 use InvalidArgumentException;
 
 /**
- * Decides which repository and branch an extension or skin is compared against,
- * based on $wgVersionWatchRepositories.
+ * Decides which repository and branch an extension or skin is compared against.
+ * See RepositorySettings for the format of the settings.
  */
 class RepositoryResolver {
 
+	private const KEYS = [ Repository::GERRIT, Repository::GITHUB, 'branch' ];
+
 	/**
-	 * @param array<string,array|false> $overrides $wgVersionWatchRepositories
-	 * @param string $releaseBranch Branch to use for Gerrit projects without an override
+	 * @param array<string,mixed> $settings Settings keyed by extension or skin name
+	 * @param string $releaseBranch Branch to use for Gerrit projects without a setting
 	 */
 	public function __construct(
-		private readonly array $overrides,
+		private readonly array $settings,
 		private readonly string $releaseBranch,
 	) {
 	}
@@ -32,28 +34,25 @@ class RepositoryResolver {
 
 	/**
 	 * @param Component $component An extension or skin
-	 * @return Repository|null Null if the component is configured to be skipped
+	 * @return Repository|null Null if the component is set to be skipped
+	 * @throws InvalidSettingException
 	 */
 	public function resolve( Component $component ): ?Repository {
-		$override = $this->overrides[$component->name] ?? [];
-		if ( $override === false ) {
+		$setting = $this->settings[$component->name] ?? [];
+		if ( $setting === false ) {
 			return null;
 		}
-		if ( !is_array( $override ) ) {
-			throw new InvalidArgumentException(
-				"\$wgVersionWatchRepositories['{$component->name}'] must be false or an array"
-			);
-		}
+		self::validate( $setting );
 
-		if ( isset( $override['github'] ) ) {
-			return new Repository( Repository::GITHUB, $override['github'], $override['branch'] ?? 'HEAD' );
+		if ( isset( $setting[Repository::GITHUB] ) ) {
+			return new Repository( Repository::GITHUB, $setting[Repository::GITHUB], $setting['branch'] ?? 'HEAD' );
 		}
 
 		$default = $this->getDefault( $component );
 		return new Repository(
 			Repository::GERRIT,
-			$override['gerrit'] ?? $default->path,
-			$override['branch'] ?? $default->branch
+			$setting[Repository::GERRIT] ?? $default->path,
+			$setting['branch'] ?? $default->branch
 		);
 	}
 
@@ -65,5 +64,27 @@ class RepositoryResolver {
 			? "mediawiki/skins/{$component->name}"
 			: "mediawiki/extensions/{$component->name}";
 		return new Repository( Repository::GERRIT, $path, $this->releaseBranch );
+	}
+
+	/**
+	 * @param mixed $setting
+	 * @throws InvalidSettingException
+	 */
+	private static function validate( $setting ): void {
+		if ( !is_array( $setting ) ) {
+			throw new InvalidSettingException( 'A setting must be false or an object' );
+		}
+		$unknown = array_diff( array_keys( $setting ), self::KEYS );
+		if ( $unknown ) {
+			throw new InvalidSettingException( 'Unknown keys: ' . implode( ', ', $unknown ) );
+		}
+		if ( isset( $setting[Repository::GERRIT] ) && isset( $setting[Repository::GITHUB] ) ) {
+			throw new InvalidSettingException( 'A setting cannot have both a Gerrit and a GitHub repository' );
+		}
+		foreach ( $setting as $key => $value ) {
+			if ( !is_string( $value ) || $value === '' ) {
+				throw new InvalidSettingException( "'$key' must be a non-empty string" );
+			}
+		}
 	}
 }

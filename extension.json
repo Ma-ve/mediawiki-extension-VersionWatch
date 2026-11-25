@@ -57,10 +57,6 @@
 		}
 	},
 	"config": {
-		"VersionWatchRepositories": {
-			"description": "Where to look up each extension or skin, keyed by its directory name. Set an entry to false to skip it, or to an array with 'gerrit' or 'github' (the repository path) and/or 'branch'. Anything not listed is looked up on Wikimedia Gerrit on the release branch matching this MediaWiki version.",
-			"value": {}
-		},
 		"VersionWatchGitHubToken": {
 			"description": "Optional GitHub token. Unauthenticated requests are limited to 60 per hour per IP address, which shared hosting may already use up.",
 			"value": null

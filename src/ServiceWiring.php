@@ -26,7 +26,9 @@ return [
 
 	'VersionWatch.RepositorySettings' => static function ( MediaWikiServices $services ): RepositorySettings {
 		return new RepositorySettings(
-			$services->getMainConfig()->get( 'VersionWatchRepositories' ),
+			$services->getRevisionLookup(),
+			$services->getWikiPageFactory(),
+			$services->getTitleFactory(),
 			RepositoryResolver::releaseBranchFor( MW_VERSION )
 		);
 	},

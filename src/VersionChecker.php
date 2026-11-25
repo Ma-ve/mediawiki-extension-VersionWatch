@@ -25,7 +25,7 @@ class VersionChecker {
 		$platform = [];
 		$gerritTargets = [];
 		$gitHubTargets = [];
-		$skipped = [];
+		$notChecked = [];
 		$resolver = $this->repositorySettings->getResolver();
 
 		foreach ( $this->installedComponents->get() as $component ) {
@@ -33,9 +33,14 @@ class VersionChecker {
 				$platform[] = $component;
 				continue;
 			}
-			$repository = $resolver->resolve( $component );
+			try {
+				$repository = $resolver->resolve( $component );
+			} catch ( InvalidSettingException ) {
+				$notChecked[] = CheckResult::unknown( $component, 'versionwatch-note-invalid-setting' );
+				continue;
+			}
 			if ( $repository === null ) {
-				$skipped[] = new CheckResult( $component, CheckResult::SKIPPED );
+				$notChecked[] = new CheckResult( $component, CheckResult::SKIPPED );
 			} elseif ( $repository->host === Repository::GITHUB ) {
 				$gitHubTargets[] = [ $component, $repository ];
 			} else {
@@ -49,7 +54,7 @@ class VersionChecker {
 				$this->releaseCycleSource->check( $platform ),
 				$this->gerritSource->check( $gerritTargets ),
 				$this->gitHubSource->check( $gitHubTargets ),
-				$skipped
+				$notChecked
 			)
 		);
 	}
