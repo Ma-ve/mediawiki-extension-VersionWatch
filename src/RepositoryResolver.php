@@ -49,13 +49,21 @@ class RepositoryResolver {
 			return new Repository( Repository::GITHUB, $override['github'], $override['branch'] ?? 'HEAD' );
 		}
 
-		$defaultPath = $component->type === Component::SKIN
-			? "mediawiki/skins/{$component->name}"
-			: "mediawiki/extensions/{$component->name}";
+		$default = $this->getDefault( $component );
 		return new Repository(
 			Repository::GERRIT,
-			$override['gerrit'] ?? $defaultPath,
-			$override['branch'] ?? $this->releaseBranch
+			$override['gerrit'] ?? $default->path,
+			$override['branch'] ?? $default->branch
 		);
+	}
+
+	/**
+	 * Where an extension or skin is looked up when nothing is configured for it.
+	 */
+	public function getDefault( Component $component ): Repository {
+		$path = $component->type === Component::SKIN
+			? "mediawiki/skins/{$component->name}"
+			: "mediawiki/extensions/{$component->name}";
+		return new Repository( Repository::GERRIT, $path, $this->releaseBranch );
 	}
 }

@@ -14,7 +14,7 @@ class VersionChecker {
 
 	public function __construct(
 		private readonly InstalledComponents $installedComponents,
-		private readonly RepositoryResolver $repositoryResolver,
+		private readonly RepositorySettings $repositorySettings,
 		private readonly ReleaseCycleSource $releaseCycleSource,
 		private readonly GerritSource $gerritSource,
 		private readonly GitHubSource $gitHubSource,
@@ -26,13 +26,14 @@ class VersionChecker {
 		$gerritTargets = [];
 		$gitHubTargets = [];
 		$skipped = [];
+		$resolver = $this->repositorySettings->getResolver();
 
 		foreach ( $this->installedComponents->get() as $component ) {
 			if ( $component->isPlatform() ) {
 				$platform[] = $component;
 				continue;
 			}
-			$repository = $this->repositoryResolver->resolve( $component );
+			$repository = $resolver->resolve( $component );
 			if ( $repository === null ) {
 				$skipped[] = new CheckResult( $component, CheckResult::SKIPPED );
 			} elseif ( $repository->host === Repository::GITHUB ) {
