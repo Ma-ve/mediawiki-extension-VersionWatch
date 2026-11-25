@@ -24,7 +24,7 @@ abstract class GitSource {
 	 * @param string[] $ignoredAuthors Authors whose commits do not make an extension outdated
 	 */
 	public function __construct(
-		private readonly HttpRequestFactory $httpRequestFactory,
+		protected readonly HttpRequestFactory $httpRequestFactory,
 		private readonly array $ignoredAuthors,
 	) {
 	}
