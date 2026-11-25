@@ -26,7 +26,7 @@ class GerritSource extends GitSource {
 	}
 
 	protected function headRequest( Repository $repository ): array {
-		return $this->request( $repository, "+/refs/heads/{$repository->branch}?format=JSON" );
+		return $this->request( $repository->path, "+/refs/heads/{$repository->branch}?format=JSON" );
 	}
 
 	protected function parseHead( Repository $repository, array $response ): array {
@@ -50,7 +50,7 @@ class GerritSource extends GitSource {
 
 	protected function compareRequest( Repository $repository, string $commit ): array {
 		return $this->request(
-			$repository,
+			$repository->path,
 			"+log/$commit..{$repository->branch}?format=JSON&n=" . self::LOG_LIMIT
 		);
 	}
@@ -70,7 +70,7 @@ class GerritSource extends GitSource {
 	}
 
 	protected function manifestRequest( Repository $repository, string $file ): array {
-		return $this->request( $repository, "+/refs/heads/{$repository->branch}/$file?format=TEXT" );
+		return $this->request( $repository->path, "+/refs/heads/{$repository->branch}/$file?format=TEXT" );
 	}
 
 	protected function parseManifest( array $response ): array {
@@ -92,10 +92,10 @@ class GerritSource extends GitSource {
 		return parent::decodeJson( [ 'body' => $body ] + $response );
 	}
 
-	private function request( Repository $repository, string $path ): array {
+	private function request( string $project, string $path ): array {
 		return [
 			'method' => 'GET',
-			'url' => self::BASE_URL . "{$repository->path}/$path",
+			'url' => self::BASE_URL . "$project/$path",
 		];
 	}
 
