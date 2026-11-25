@@ -1,0 +1,103 @@
+<?php
+
+namespace MediaWiki\Extension\VersionWatch\Tests\Unit\Source;
+
+use MediaWiki\Extension\VersionWatch\CheckResult;
+use MediaWiki\Extension\VersionWatch\Component;
+use MediaWiki\Extension\VersionWatch\Repository;
+use MediaWiki\Extension\VersionWatch\Source\GitHubSource;
+use MediaWiki\Extension\VersionWatch\Tests\MockHttpTrait;
+use MediaWikiUnitTestCase;
+
+/**
+ * @covers \MediaWiki\Extension\VersionWatch\Source\GitHubSource
+ * @covers \MediaWiki\Extension\VersionWatch\Source\GitSource
+ */
+class GitHubSourceTest extends MediaWikiUnitTestCase {
+	use MockHttpTrait;
+
+	private const LOCAL_COMMIT = '0123456789abcdef0123456789abcdef01234567';
+	private const HEAD_URL = 'https://api.github.com/repos/example/GTag/commits/HEAD';
+	private const COMPARE_URL = 'https://api.github.com/repos/example/GTag/compare/' . self::LOCAL_COMMIT . '...HEAD';
+
+	private const HEAD_RESPONSE = [
+		'sha' => 'fedcba9876543210fedcba9876543210fedcba98',
+		'commit' => [ 'committer' => [ 'date' => '2026-11-01T12:00:00Z' ] ],
+	];
+
+	private function check( array $responses, ?string $token = null ): CheckResult {
+		$source = new GitHubSource( $this->newHttpRequestFactory( $responses ), [ 'Translation updater bot' ], $token );
+		$results = $source->check( [ [
+			new Component( Component::EXTENSION, 'GTag', '1.3.0', self::LOCAL_COMMIT ),
+			new Repository( Repository::GITHUB, 'example/GTag', 'HEAD' ),
+		] ] );
+		return $results[0];
+	}
+
+	private static function json( array $data ): array {
+		return [ 'body' => json_encode( $data ) ];
+	}
+
+	public function testTruncatedComparisonCountsUnlistedCommits() {
+		// GitHub lists at most 250 commits but reports the full count in ahead_by.
+		$result = $this->check( [
+			self::HEAD_URL => self::json( self::HEAD_RESPONSE ),
+			self::COMPARE_URL => self::json( [
+				'ahead_by' => 300,
+				'commits' => [
+					[ 'commit' => [ 'author' => [ 'name' => 'Translation updater bot' ] ] ],
+					[ 'commit' => [ 'author' => [ 'name' => 'Translation updater bot' ] ] ],
+				],
+			] ),
+		] );
+
+		$this->assertSame( CheckResult::OUTDATED, $result->status );
+		$this->assertSame( 'fedcba9', $result->latest );
+		$this->assertSame( '20261101120000', $result->latestDate );
+		$this->assertSame( [ 298, 'HEAD' ], $result->noteParams );
+	}
+
+	public function testTokenIsSentToApiOnly() {
+		$this->check( [
+			self::HEAD_URL => self::json( self::HEAD_RESPONSE ),
+			self::COMPARE_URL => self::json( [ 'ahead_by' => 0, 'commits' => [] ] ),
+		], 'secret' );
+
+		$this->assertSame( 'Bearer secret', $this->sentRequests[self::HEAD_URL]['headers']['Authorization'] );
+	}
+
+	public function testRateLimit() {
+		$limited = [ 'code' => 403, 'headers' => [ 'x-ratelimit-remaining' => '0' ] ];
+		$result = $this->check( [ self::HEAD_URL => $limited, self::COMPARE_URL => $limited ] );
+
+		$this->assertSame( CheckResult::UNKNOWN, $result->status );
+		$this->assertSame( 'versionwatch-note-github-rate-limit', $result->note );
+	}
+
+	public function testForbiddenWithoutRateLimitIsAFailedRequest() {
+		$forbidden = [ 'code' => 403, 'headers' => [ 'x-ratelimit-remaining' => '42' ] ];
+		$result = $this->check( [ self::HEAD_URL => $forbidden, self::COMPARE_URL => $forbidden ] );
+
+		$this->assertSame( 'versionwatch-note-request-failed', $result->note );
+		$this->assertSame( [ 'github.com', 'HTTP 403' ], $result->noteParams );
+	}
+
+	public function testMissingBranch() {
+		$result = $this->check( [
+			self::HEAD_URL => [ 'code' => 422 ],
+			self::COMPARE_URL => [ 'code' => 404 ],
+		] );
+
+		$this->assertSame( 'versionwatch-note-no-branch', $result->note );
+	}
+
+	public function testMissingRepository() {
+		$result = $this->check( [
+			self::HEAD_URL => [ 'code' => 404 ],
+			self::COMPARE_URL => [ 'code' => 404 ],
+		] );
+
+		$this->assertSame( 'versionwatch-note-repo-not-found', $result->note );
+		$this->assertSame( [ 'example/GTag', 'github.com' ], $result->noteParams );
+	}
+}

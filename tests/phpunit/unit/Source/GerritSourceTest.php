@@ -1,0 +1,165 @@
+<?php
+
+namespace MediaWiki\Extension\VersionWatch\Tests\Unit\Source;
+
+use MediaWiki\Extension\VersionWatch\CheckResult;
+use MediaWiki\Extension\VersionWatch\Component;
+use MediaWiki\Extension\VersionWatch\Repository;
+use MediaWiki\Extension\VersionWatch\Source\GerritSource;
+use MediaWiki\Extension\VersionWatch\Tests\MockHttpTrait;
+use MediaWikiUnitTestCase;
+
+/**
+ * @covers \MediaWiki\Extension\VersionWatch\Source\GerritSource
+ * @covers \MediaWiki\Extension\VersionWatch\Source\GitSource
+ */
+class GerritSourceTest extends MediaWikiUnitTestCase {
+	use MockHttpTrait;
+
+	private const BASE = 'https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/Echo/';
+	private const HEAD_URL = self::BASE . '+/refs/heads/REL1_43?format=JSON';
+	private const LOCAL_COMMIT = 'edd9090aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+	private const LOG_URL = self::BASE . '+log/' . self::LOCAL_COMMIT . '..REL1_43?format=JSON&n=10000';
+	private const MANIFEST_URL = self::BASE . '+/refs/heads/REL1_43/extension.json?format=TEXT';
+
+	private const HEAD_RESPONSE = [
+		'commit' => 'f6d697bd699652fd6c8196e06141e52fec2d025c',
+		'committer' => [ 'time' => 'Tue Nov 24 05:35:35 2026 +0100' ],
+	];
+
+	private function checkOne( Component $component, array $responses ): CheckResult {
+		$source = new GerritSource( $this->newHttpRequestFactory( $responses ), [ 'Translation updater bot' ] );
+		$repository = new Repository( Repository::GERRIT, 'mediawiki/extensions/Echo', 'REL1_43' );
+		$results = $source->check( [ [ $component, $repository ] ] );
+		$this->assertCount( 1, $results );
+		return $results[0];
+	}
+
+	/**
+	 * Gitiles prefixes its JSON to prevent cross-site script inclusion.
+	 */
+	private static function gitilesJson( array $data ): array {
+		return [ 'body' => ")]}'\n" . json_encode( $data ) ];
+	}
+
+	private static function logOf( string ...$authors ): array {
+		return self::gitilesJson( [
+			'log' => array_map( static fn ( $name ) => [ 'author' => [ 'name' => $name ] ], $authors ),
+		] );
+	}
+
+	private static function gitCheckout(): Component {
+		return new Component( Component::EXTENSION, 'Echo', null, self::LOCAL_COMMIT, '20220609072700' );
+	}
+
+	public function testCommitsBehindExcludingIgnoredAuthors() {
+		$result = $this->checkOne( self::gitCheckout(), [
+			self::HEAD_URL => self::gitilesJson( self::HEAD_RESPONSE ),
+			self::LOG_URL => self::logOf( 'Translation updater bot', 'Umherirrender', 'Translation updater bot' ),
+		] );
+
+		$this->assertSame( CheckResult::OUTDATED, $result->status );
+		$this->assertSame( 'f6d697b', $result->latest );
+		$this->assertSame( '20261124043535', $result->latestDate );
+		$this->assertSame( 'versionwatch-note-commits-behind', $result->note );
+		$this->assertSame( [ 1, 'REL1_43' ], $result->noteParams );
+	}
+
+	public function testOnlyIgnoredCommitsBehindIsCurrent() {
+		$result = $this->checkOne( self::gitCheckout(), [
+			self::HEAD_URL => self::gitilesJson( self::HEAD_RESPONSE ),
+			self::LOG_URL => self::logOf( 'Translation updater bot', 'Translation updater bot' ),
+		] );
+
+		$this->assertSame( CheckResult::CURRENT, $result->status );
+		$this->assertSame( 'versionwatch-note-only-ignored-commits', $result->note );
+		$this->assertSame( [ 2 ], $result->noteParams );
+	}
+
+	public function testAtBranchHead() {
+		$result = $this->checkOne( self::gitCheckout(), [
+			self::HEAD_URL => self::gitilesJson( self::HEAD_RESPONSE ),
+			self::LOG_URL => self::logOf(),
+		] );
+
+		$this->assertSame( CheckResult::CURRENT, $result->status );
+		$this->assertNull( $result->note );
+	}
+
+	public function testMissingBranch() {
+		$result = $this->checkOne( self::gitCheckout(), [
+			self::HEAD_URL => [ 'code' => 404 ],
+			self::LOG_URL => [ 'code' => 404 ],
+		] );
+
+		$this->assertSame( CheckResult::UNKNOWN, $result->status );
+		$this->assertSame( 'versionwatch-note-no-branch', $result->note );
+		$this->assertSame( [ 'REL1_43' ], $result->noteParams );
+	}
+
+	public function testMissingRepository() {
+		$result = $this->checkOne( self::gitCheckout(), [
+			self::HEAD_URL => [ 'code' => 401 ],
+			self::LOG_URL => [ 'code' => 401 ],
+		] );
+
+		$this->assertSame( CheckResult::UNKNOWN, $result->status );
+		$this->assertSame( 'versionwatch-note-repo-not-found', $result->note );
+		$this->assertSame( [ 'mediawiki/extensions/Echo', 'gerrit.wikimedia.org' ], $result->noteParams );
+	}
+
+	public function testCommitUnknownUpstream() {
+		$result = $this->checkOne( self::gitCheckout(), [
+			self::HEAD_URL => self::gitilesJson( self::HEAD_RESPONSE ),
+			self::LOG_URL => [ 'code' => 404 ],
+		] );
+
+		$this->assertSame( CheckResult::UNKNOWN, $result->status );
+		$this->assertSame( 'versionwatch-note-commit-not-found', $result->note );
+		$this->assertSame( [ 'edd9090' ], $result->noteParams );
+	}
+
+	public function testVersionComparedWithoutGit() {
+		$result = $this->checkOne( new Component( Component::EXTENSION, 'Echo', '0.5.3' ), [
+			self::HEAD_URL => self::gitilesJson( self::HEAD_RESPONSE ),
+			self::MANIFEST_URL => [ 'body' => base64_encode( json_encode( [ 'version' => '0.5.4' ] ) ) ],
+		] );
+
+		$this->assertSame( CheckResult::OUTDATED, $result->status );
+		$this->assertSame( '0.5.4', $result->latest );
+	}
+
+	public function testUpstreamWithoutVersion() {
+		$result = $this->checkOne( new Component( Component::EXTENSION, 'Echo', '0.5.3' ), [
+			self::HEAD_URL => self::gitilesJson( self::HEAD_RESPONSE ),
+			self::MANIFEST_URL => [ 'body' => base64_encode( json_encode( [ 'name' => 'Echo' ] ) ) ],
+		] );
+
+		$this->assertSame( CheckResult::UNKNOWN, $result->status );
+		$this->assertSame( 'versionwatch-note-no-upstream-version', $result->note );
+	}
+
+	public function testNeitherCommitNorVersion() {
+		$result = $this->checkOne( new Component( Component::EXTENSION, 'Echo' ), [
+			self::HEAD_URL => self::gitilesJson( self::HEAD_RESPONSE ),
+		] );
+
+		$this->assertSame( CheckResult::UNKNOWN, $result->status );
+		$this->assertSame( 'versionwatch-note-no-version', $result->note );
+	}
+
+	public function testSkinUsesSkinManifest() {
+		$base = 'https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/skins/Vector/+/refs/heads/REL1_43';
+		$source = new GerritSource( $this->newHttpRequestFactory( [
+			"$base?format=JSON" => self::gitilesJson( self::HEAD_RESPONSE ),
+			"$base/skin.json?format=TEXT" => [ 'body' => base64_encode( json_encode( [ 'version' => '1.0.0' ] ) ) ],
+		] ), [] );
+
+		$results = $source->check( [ [
+			new Component( Component::SKIN, 'Vector', '1.0.0' ),
+			new Repository( Repository::GERRIT, 'mediawiki/skins/Vector', 'REL1_43' ),
+		] ] );
+
+		$this->assertSame( CheckResult::CURRENT, $results[0]->status );
+	}
+}
