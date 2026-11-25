@@ -1,0 +1,8 @@
+# Development files are left out of `git archive`, which builds the release zip.
+/.gitattributes export-ignore
+/.github export-ignore
+/.gitignore export-ignore
+/.phan export-ignore
+/.phpcs.xml export-ignore
+/composer.json export-ignore
+/tests export-ignore
