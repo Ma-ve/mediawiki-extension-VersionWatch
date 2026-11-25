@@ -236,6 +236,9 @@ class SpecialVersionWatch extends SpecialPage {
 	 * @return string HTML
 	 */
 	private function formatRepository( Component $component, RepositoryResolver $resolver ): string {
+		if ( $component->partOf !== null ) {
+			return $this->msg( 'versionwatch-repository-part-of' )->plaintextParams( $component->partOf )->escaped();
+		}
 		try {
 			$repository = $resolver->resolve( $component );
 			if ( $repository === null ) {
@@ -271,6 +274,14 @@ class SpecialVersionWatch extends SpecialPage {
 		if ( $component === null ) {
 			$out->addHTML( Html::errorBox(
 				$this->msg( 'versionwatch-settings-not-installed' )->plaintextParams( $name )->parse()
+			) );
+			return;
+		}
+		if ( $component->partOf !== null ) {
+			$out->addHTML( Html::errorBox(
+				$this->msg( 'versionwatch-settings-part-of' )
+					->plaintextParams( $component->name, $component->partOf )
+					->parse()
 			) );
 			return;
 		}

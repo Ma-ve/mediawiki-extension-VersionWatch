@@ -8,15 +8,19 @@ use MediaWiki\Extension\VersionWatch\Source\GerritSource;
 use MediaWiki\Extension\VersionWatch\Source\GitHubSource;
 use MediaWiki\Extension\VersionWatch\Source\ReleaseCycleSource;
 use MediaWiki\Extension\VersionWatch\VersionChecker;
+use MediaWiki\MainConfigNames;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Registration\ExtensionRegistry;
 
 /** @phpcs-require-sorted-array */
 return [
 	'VersionWatch.InstalledComponents' => static function ( MediaWikiServices $services ): InstalledComponents {
+		$config = $services->getMainConfig();
 		return new InstalledComponents(
 			ExtensionRegistry::getInstance(),
-			$services->getConnectionProvider()
+			$services->getConnectionProvider(),
+			$config->get( MainConfigNames::ExtensionDirectory ),
+			$config->get( MainConfigNames::StyleDirectory )
 		);
 	},
 

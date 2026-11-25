@@ -12,9 +12,17 @@ use Wikimedia\Timestamp\ConvertibleTimestamp;
  */
 class InstalledComponents {
 
+	/**
+	 * @param ExtensionRegistry $extensionRegistry
+	 * @param IConnectionProvider $connectionProvider
+	 * @param string $extensionDirectory $wgExtensionDirectory
+	 * @param string $styleDirectory $wgStyleDirectory
+	 */
 	public function __construct(
 		private readonly ExtensionRegistry $extensionRegistry,
 		private readonly IConnectionProvider $connectionProvider,
+		private readonly string $extensionDirectory,
+		private readonly string $styleDirectory,
 	) {
 	}
 
@@ -29,16 +37,35 @@ class InstalledComponents {
 		];
 
 		foreach ( $this->extensionRegistry->getAllThings() as $credits ) {
+			$isSkin = $credits['type'] === 'skin';
 			$dir = dirname( $credits['path'] );
+			$name = self::getLoadName( $dir, $isSkin ? $this->styleDirectory : $this->extensionDirectory );
+			$parent = str_contains( $name, '/' ) ? strstr( $name, '/', true ) : null;
+			// A module inside another extension shares that extension's checkout.
+			[ $commit, $commitDate ] = $parent === null ? $this->getGitInfo( $dir ) : [ null, null ];
+
 			$components[] = new Component(
-				$credits['type'] === 'skin' ? Component::SKIN : Component::EXTENSION,
-				basename( $dir ),
+				$isSkin ? Component::SKIN : Component::EXTENSION,
+				$name,
 				$credits['version'] ?? null,
-				...$this->getGitInfo( $dir )
+				$commit,
+				$commitDate,
+				null,
+				$parent
 			);
 		}
 
 		return $components;
+	}
+
+	/**
+	 * The name passed to wfLoadExtension() or wfLoadSkin(): the directory relative to the
+	 * extensions or skins directory. For a module inside another extension that is a path,
+	 * such as "ConfirmEdit/Turnstile".
+	 */
+	private static function getLoadName( string $dir, string $baseDir ): string {
+		$prefix = rtrim( $baseDir, '/' ) . '/';
+		return str_starts_with( $dir, $prefix ) ? substr( $dir, strlen( $prefix ) ) : basename( $dir );
 	}
 
 	private function getDatabase(): Component {

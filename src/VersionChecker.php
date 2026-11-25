@@ -26,6 +26,7 @@ class VersionChecker {
 		$gerritTargets = [];
 		$gitHubTargets = [];
 		$notChecked = [];
+		$modules = [];
 		$coreVersion = null;
 		$resolver = $this->repositorySettings->getResolver();
 
@@ -35,6 +36,10 @@ class VersionChecker {
 			}
 			if ( $component->isPlatform() ) {
 				$platform[] = $component;
+				continue;
+			}
+			if ( $component->partOf !== null ) {
+				$modules[] = $component;
 				continue;
 			}
 			try {
@@ -56,15 +61,44 @@ class VersionChecker {
 			$gerritTargets = $this->withBundledCommits( $gerritTargets, $coreVersion );
 		}
 
+		$results = array_merge(
+			$this->releaseCycleSource->check( $platform ),
+			$this->gerritSource->check( $gerritTargets ),
+			$this->gitHubSource->check( $gitHubTargets ),
+			$notChecked
+		);
 		return new Report(
 			ConvertibleTimestamp::now( TS_MW ),
-			array_merge(
-				$this->releaseCycleSource->check( $platform ),
-				$this->gerritSource->check( $gerritTargets ),
-				$this->gitHubSource->check( $gitHubTargets ),
-				$notChecked
-			)
+			array_merge( $results, $this->followParents( $modules, $results ) )
 		);
+	}
+
+	/**
+	 * A module inside another extension, such as ConfirmEdit/Turnstile, has no repository
+	 * of its own and is updated together with that extension, so it gets its status.
+	 *
+	 * @param Component[] $modules
+	 * @param CheckResult[] $results
+	 * @return CheckResult[]
+	 */
+	private function followParents( array $modules, array $results ): array {
+		$byName = [];
+		foreach ( $results as $result ) {
+			$byName[$result->component->type][$result->component->name] = $result;
+		}
+
+		return array_map( static function ( Component $module ) use ( $byName ) {
+			$parent = $byName[$module->type][$module->partOf] ?? null;
+			return new CheckResult(
+				$module,
+				$parent?->status ?? CheckResult::UNKNOWN,
+				$parent?->latest,
+				$parent?->latestDate,
+				null,
+				'versionwatch-note-part-of',
+				[ $module->partOf ]
+			);
+		}, $modules );
 	}
 
 	/**

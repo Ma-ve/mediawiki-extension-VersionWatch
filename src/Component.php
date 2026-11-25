@@ -23,6 +23,8 @@ class Component {
 	 * @param string|null $commitDate Commit date in TS_MW format
 	 * @param string|null $bundledWith MediaWiki version whose download $commit was taken from,
 	 *  for extensions and skins without git information of their own
+	 * @param string|null $partOf For a module that lives inside another extension, such as
+	 *  "ConfirmEdit/Turnstile", the name of that extension
 	 */
 	public function __construct(
 		public readonly string $type,
@@ -31,6 +33,7 @@ class Component {
 		public readonly ?string $commit = null,
 		public readonly ?string $commitDate = null,
 		public readonly ?string $bundledWith = null,
+		public readonly ?string $partOf = null,
 	) {
 	}
 
@@ -41,7 +44,7 @@ class Component {
 	 * @param string $mwVersion
 	 */
 	public function withBundledCommit( string $commit, string $mwVersion ): self {
-		return new self( $this->type, $this->name, $this->version, $commit, null, $mwVersion );
+		return new self( $this->type, $this->name, $this->version, $commit, null, $mwVersion, $this->partOf );
 	}
 
 	public function isPlatform(): bool {
@@ -63,6 +66,7 @@ class Component {
 			'commit' => $this->commit,
 			'commitDate' => $this->commitDate,
 			'bundledWith' => $this->bundledWith,
+			'partOf' => $this->partOf,
 		];
 	}
 
@@ -73,8 +77,9 @@ class Component {
 			$data['version'],
 			$data['commit'],
 			$data['commitDate'],
-			// Not present in reports stored before this was added
+			// Not present in reports stored before these were added
 			$data['bundledWith'] ?? null,
+			$data['partOf'] ?? null,
 		);
 	}
 }
