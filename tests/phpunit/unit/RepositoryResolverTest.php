@@ -4,6 +4,7 @@ namespace MediaWiki\Extension\VersionWatch\Tests\Unit;
 
 use InvalidArgumentException;
 use MediaWiki\Extension\VersionWatch\Component;
+use MediaWiki\Extension\VersionWatch\InvalidSettingException;
 use MediaWiki\Extension\VersionWatch\Repository;
 use MediaWiki\Extension\VersionWatch\RepositoryResolver;
 use MediaWikiUnitTestCase;
@@ -66,9 +67,28 @@ class RepositoryResolverTest extends MediaWikiUnitTestCase {
 		$this->assertEquals( $expected, $resolver->resolve( $component ) );
 	}
 
-	public function testInvalidOverride() {
-		$resolver = new RepositoryResolver( [ 'Echo' => 'mediawiki/extensions/Echo' ], 'REL1_43' );
-		$this->expectException( InvalidArgumentException::class );
+	public static function provideInvalidSetting() {
+		yield 'not an object' => [ 'mediawiki/extensions/Echo' ];
+		yield 'unknown key' => [ [ 'gitlab' => 'example/Echo' ] ];
+		yield 'both hosts' => [ [ 'gerrit' => 'mediawiki/extensions/Echo', 'github' => 'example/Echo' ] ];
+		yield 'not a string' => [ [ 'gerrit' => 12 ] ];
+		yield 'empty string' => [ [ 'branch' => '' ] ];
+	}
+
+	/**
+	 * @dataProvider provideInvalidSetting
+	 */
+	public function testInvalidSetting( $setting ) {
+		$resolver = new RepositoryResolver( [ 'Echo' => $setting ], 'REL1_43' );
+		$this->expectException( InvalidSettingException::class );
 		$resolver->resolve( new Component( Component::EXTENSION, 'Echo' ) );
+	}
+
+	public function testDefault() {
+		$resolver = new RepositoryResolver( [ 'Echo' => [ 'github' => 'example/Echo' ] ], 'REL1_43' );
+		$this->assertEquals(
+			new Repository( Repository::GERRIT, 'mediawiki/extensions/Echo', 'REL1_43' ),
+			$resolver->getDefault( new Component( Component::EXTENSION, 'Echo' ) )
+		);
 	}
 }
