@@ -30,13 +30,17 @@ Sysops can also run a check at any time with the button on `Special:VersionWatch
 |---|---|---|
 | MediaWiki, PHP, MariaDB, MySQL, PostgreSQL, SQLite | Release data from [endoflife.date](https://endoflife.date) | *Update available* if a newer patch release exists on your branch; *Unsupported* once the branch reaches end of life |
 | Extensions and skins installed from git, or downloaded from ExtensionDistributor | The matching release branch (`REL1_43` on 1.43) on Wikimedia Gerrit | *Update available* if the branch has commits you do not have |
-| Extensions and skins without git information | The `version` in `extension.json` or `skin.json` on that branch | *Update available* if upstream has a higher version |
+| Extensions and skins that came with the MediaWiki download | The commit your MediaWiki release pinned them to, compared with the release branch like a git checkout | *Update available* if the branch has commits you do not have |
+| Other extensions and skins without git information | The `version` in `extension.json` or `skin.json` on that branch | *Update available* if upstream has a higher version |
 
 Commits from the translation bot land on every branch almost daily, so they do not count
 towards *Update available*. See `$wgVersionWatchIgnoredAuthors`.
 
-Extensions bundled with the MediaWiki download usually have neither git information nor a
-version, so they show as *Unknown*. They are updated whenever MediaWiki is.
+Extensions bundled with the MediaWiki download have no git information, but each MediaWiki
+release tag pins the exact commit of every bundled extension and skin. VersionWatch assumes
+such an extension is the copy that came with your MediaWiki version, and checks that commit.
+If you replaced a bundled extension with a newer copy that has no git information, install
+it from git or ExtensionDistributor instead, so its own commit is used.
 
 The report is kept in the main object stash, so viewing the special page never waits on
 remote requests.
