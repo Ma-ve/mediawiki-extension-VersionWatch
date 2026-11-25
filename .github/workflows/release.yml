@@ -82,5 +82,5 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           gh release create "v$VERSION" "VersionWatch-$VERSION.zip" \
-            --title "VersionWatch $VERSION" \
+            --title "$VERSION" \
             --generate-notes
