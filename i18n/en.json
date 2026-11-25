@@ -4,7 +4,28 @@
 			"Mave"
 		]
 	},
+	"versionwatch": "Version watch",
 	"versionwatch-desc": "Checks MediaWiki, PHP, the database server, extensions and skins for available updates",
+	"versionwatch-summary": "This page compares the installed software with its upstream releases and repositories. Results are stored, so they only change when a check runs.",
+	"versionwatch-check-now": "Check now",
+	"versionwatch-no-report": "No check has run yet. Use the button above, or schedule <code>php maintenance/run.php VersionWatch:checkVersions --problems-only</code> to run daily.",
+	"versionwatch-last-checked": "Last checked: $1.",
+	"versionwatch-stale": "This report is more than a week old. Check that the scheduled <code>VersionWatch:checkVersions</code> job is still running.",
+	"versionwatch-attention": "{{PLURAL:$1|One component needs|$1 components need}} attention.",
+	"versionwatch-attention-none": "Everything that could be checked is up to date.",
+	"versionwatch-section-platform": "Platform",
+	"versionwatch-section-extensions": "Extensions",
+	"versionwatch-section-skins": "Skins",
+	"versionwatch-column-name": "Name",
+	"versionwatch-column-installed": "Installed",
+	"versionwatch-column-latest": "Latest",
+	"versionwatch-column-status": "Status",
+	"versionwatch-column-note": "Details",
+	"versionwatch-status-current": "Up to date",
+	"versionwatch-status-outdated": "Update available",
+	"versionwatch-status-unsupported": "Unsupported",
+	"versionwatch-status-unknown": "Unknown",
+	"versionwatch-status-skipped": "Skipped",
 	"versionwatch-note-request-failed": "Could not reach $1: $2.",
 	"versionwatch-note-bad-response": "$1 returned a response that could not be read.",
 	"versionwatch-note-unknown-product": "No release information is available for this software.",
@@ -19,5 +40,7 @@
 	"versionwatch-note-commit-not-found": "The installed commit $1 does not exist upstream. This may be a fork or a local change.",
 	"versionwatch-note-no-version": "Not installed from git and declares no version. If it came with the MediaWiki download, it is updated together with MediaWiki.",
 	"versionwatch-note-no-upstream-version": "The upstream branch declares no version to compare with.",
-	"versionwatch-note-github-rate-limit": "The GitHub rate limit was reached. Set <code>$wgVersionWatchGitHubToken</code> to raise it."
+	"versionwatch-note-github-rate-limit": "The GitHub rate limit was reached. Set <code>$wgVersionWatchGitHubToken</code> to raise it.",
+	"right-versionwatch": "View and run update checks for installed software",
+	"action-versionwatch": "view and run update checks for installed software"
 }

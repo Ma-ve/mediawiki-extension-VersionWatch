@@ -1,0 +1,31 @@
+@import 'mediawiki.skin.variables.less';
+
+.ext-versionwatch-table {
+	td {
+		vertical-align: top;
+	}
+}
+
+.ext-versionwatch-status {
+	display: inline-block;
+	padding: 0 @spacing-50;
+	border-radius: @border-radius-base;
+	white-space: nowrap;
+
+	&-current {
+		background-color: @background-color-success-subtle;
+	}
+
+	&-outdated {
+		background-color: @background-color-warning-subtle;
+	}
+
+	&-unsupported {
+		background-color: @background-color-error-subtle;
+	}
+
+	&-unknown,
+	&-skipped {
+		background-color: @background-color-disabled-subtle;
+	}
+}

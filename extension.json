@@ -22,9 +22,40 @@
 			"i18n"
 		]
 	},
+	"ExtensionMessagesFiles": {
+		"VersionWatchAlias": "VersionWatch.alias.php"
+	},
 	"ServiceWiringFiles": [
 		"src/ServiceWiring.php"
 	],
+	"SpecialPages": {
+		"VersionWatch": {
+			"class": "MediaWiki\\Extension\\VersionWatch\\Specials\\SpecialVersionWatch",
+			"services": [
+				"VersionWatch.VersionChecker",
+				"VersionWatch.ReportStore"
+			]
+		}
+	},
+	"AvailableRights": [
+		"versionwatch"
+	],
+	"GroupPermissions": {
+		"sysop": {
+			"versionwatch": true
+		}
+	},
+	"ResourceFileModulePaths": {
+		"localBasePath": "modules",
+		"remoteExtPath": "VersionWatch/modules"
+	},
+	"ResourceModules": {
+		"ext.versionWatch.styles": {
+			"styles": [
+				"ext.versionWatch.less"
+			]
+		}
+	},
 	"config": {
 		"VersionWatchRepositories": {
 			"description": "Where to look up each extension or skin, keyed by its directory name. Set an entry to false to skip it, or to an array with 'gerrit' or 'github' (the repository path) and/or 'branch'. Anything not listed is looked up on Wikimedia Gerrit on the release branch matching this MediaWiki version.",

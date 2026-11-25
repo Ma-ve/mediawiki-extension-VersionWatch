@@ -4,7 +4,28 @@
 			"Mave"
 		]
 	},
+	"versionwatch": "{{doc-special|VersionWatch}}",
 	"versionwatch-desc": "{{desc|name=VersionWatch|url=https://www.mediawiki.org/wiki/Extension:VersionWatch}}",
+	"versionwatch-summary": "{{doc-specialpagesummary|VersionWatch}}",
+	"versionwatch-check-now": "Label of the button on [[Special:VersionWatch]] that runs a new check.",
+	"versionwatch-no-report": "Shown on [[Special:VersionWatch]] when no check has run yet.",
+	"versionwatch-last-checked": "Shown above the report.\n\nParameters:\n* $1 - date and time of the check",
+	"versionwatch-stale": "Warning shown when the stored report is more than a week old.",
+	"versionwatch-attention": "Summary above the report.\n\nParameters:\n* $1 - number of components that are outdated or no longer supported",
+	"versionwatch-attention-none": "Summary above the report when nothing is outdated or unsupported.",
+	"versionwatch-section-platform": "Heading for the table with MediaWiki, PHP and the database server.",
+	"versionwatch-section-extensions": "Heading for the table of extensions.\n{{Identical|Extension}}",
+	"versionwatch-section-skins": "Heading for the table of skins.\n{{Identical|Skin}}",
+	"versionwatch-column-name": "Table column header.\n{{Identical|Name}}",
+	"versionwatch-column-installed": "Table column header for the installed version.",
+	"versionwatch-column-latest": "Table column header for the latest available version or commit.",
+	"versionwatch-column-status": "Table column header.\n{{Identical|Status}}",
+	"versionwatch-column-note": "Table column header for the explanation of the status.\n{{Identical|Details}}",
+	"versionwatch-status-current": "Status of a component that is up to date.",
+	"versionwatch-status-outdated": "Status of a component for which a newer version or newer commits exist.",
+	"versionwatch-status-unsupported": "Status of a component whose release branch has reached end of life.",
+	"versionwatch-status-unknown": "Status of a component that could not be checked. The details column explains why.\n{{Identical|Unknown}}",
+	"versionwatch-status-skipped": "Status of a component that the configuration excludes from checking.",
 	"versionwatch-note-request-failed": "Parameters:\n* $1 - host name, such as gerrit.wikimedia.org\n* $2 - error, such as \"HTTP 500\" or a connection error from cURL",
 	"versionwatch-note-bad-response": "Parameters:\n* $1 - host name",
 	"versionwatch-note-unknown-product": "Shown for a database server type that has no release data.",
@@ -19,5 +40,7 @@
 	"versionwatch-note-commit-not-found": "Parameters:\n* $1 - abbreviated commit hash",
 	"versionwatch-note-no-version": "Shown for an extension or skin that has neither git information nor a version number.",
 	"versionwatch-note-no-upstream-version": "Shown when the upstream extension.json or skin.json has no version to compare with.",
-	"versionwatch-note-github-rate-limit": "Do not translate <code>$wgVersionWatchGitHubToken</code>."
+	"versionwatch-note-github-rate-limit": "Do not translate <code>$wgVersionWatchGitHubToken</code>.",
+	"right-versionwatch": "{{doc-right|versionwatch}}",
+	"action-versionwatch": "{{doc-action|versionwatch}}"
 }
