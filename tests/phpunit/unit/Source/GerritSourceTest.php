@@ -19,7 +19,7 @@ class GerritSourceTest extends MediaWikiUnitTestCase {
 	private const BASE = 'https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/Echo/';
 	private const HEAD_URL = self::BASE . '+/refs/heads/REL1_43?format=JSON';
 	private const LOCAL_COMMIT = 'edd9090aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
-	private const LOG_URL = self::BASE . '+log/' . self::LOCAL_COMMIT . '..REL1_43?format=JSON&n=10000';
+	private const LOG_URL = self::BASE . '+log/' . self::LOCAL_COMMIT . '..REL1_43?format=JSON&name-status=1&n=10000';
 	private const MANIFEST_URL = self::BASE . '+/refs/heads/REL1_43/extension.json?format=TEXT';
 
 	private const HEAD_RESPONSE = [
@@ -47,9 +47,25 @@ class GerritSourceTest extends MediaWikiUnitTestCase {
 		return [ 'body' => ")]}'\n" . json_encode( $data ) ];
 	}
 
+	/**
+	 * @param string ...$authors One commit per author, each changing a PHP file
+	 */
 	private static function logOf( string ...$authors ): array {
+		return self::logWithFiles( ...array_map( static fn ( $name ) => [ $name, [ 'src/Hooks.php' ] ], $authors ) );
+	}
+
+	/**
+	 * @param array ...$commits Pairs of author and changed files
+	 */
+	private static function logWithFiles( array ...$commits ): array {
 		return self::gitilesJson( [
-			'log' => array_map( static fn ( $name ) => [ 'author' => [ 'name' => $name ] ], $authors ),
+			'log' => array_map( static fn ( array $commit ) => [
+				'author' => [ 'name' => $commit[0] ],
+				'tree_diff' => array_map(
+					static fn ( $path ) => [ 'old_path' => $path, 'new_path' => $path ],
+					$commit[1]
+				),
+			], $commits ),
 		] );
 	}
 
@@ -81,6 +97,34 @@ class GerritSourceTest extends MediaWikiUnitTestCase {
 		$this->assertSame( CheckResult::CURRENT, $result->status );
 		$this->assertSame( 'versionwatch-note-only-ignored-commits', $result->note );
 		$this->assertSame( [ 2 ], $result->noteParams );
+	}
+
+	public function testCommitsOnlyChangingDevelopmentFilesDoNotCount() {
+		$result = $this->checkOne( self::gitCheckout(), [
+			self::HEAD_URL => self::gitilesJson( self::HEAD_RESPONSE ),
+			self::LOG_URL => self::logWithFiles(
+				[ 'libraryupgrader', [ 'package.json', 'package-lock.json' ] ],
+				[ 'libraryupgrader', [ 'composer.json', '.phpcs.xml' ] ],
+				[ 'Umherirrender', [ 'tests/phpunit/HooksTest.php' ] ],
+				[ 'Umherirrender', [ 'src/Hooks.php', 'tests/phpunit/HooksTest.php' ] ]
+			),
+		] );
+
+		$this->assertSame( CheckResult::OUTDATED, $result->status );
+		$this->assertSame( [ 1, 'REL1_43' ], $result->noteParams, 'Only the commit changing src/ counts' );
+	}
+
+	public function testDeletedFileUsesItsOldPath() {
+		$log = self::gitilesJson( [ 'log' => [ [
+			'author' => [ 'name' => 'Reedy' ],
+			'tree_diff' => [ [ 'old_path' => 'src/Unused.php', 'new_path' => '/dev/null' ] ],
+		] ] ] );
+		$result = $this->checkOne( self::gitCheckout(), [
+			self::HEAD_URL => self::gitilesJson( self::HEAD_RESPONSE ),
+			self::LOG_URL => $log,
+		] );
+
+		$this->assertSame( CheckResult::OUTDATED, $result->status );
 	}
 
 	public function testAtBranchHead() {
