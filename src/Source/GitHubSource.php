@@ -73,8 +73,12 @@ class GitHubSource extends GitSource {
 		// "ahead_by" counts all commits, but the list is capped at 250 entries.
 		return [
 			'total' => (int)( $data['ahead_by'] ?? 0 ),
-			'authors' => array_map(
-				static fn ( array $entry ) => $entry['commit']['author']['name'] ?? '',
+			// The comparison lists the files of all commits together, not per commit.
+			'commits' => array_map(
+				static fn ( array $entry ) => [
+					'author' => $entry['commit']['author']['name'] ?? '',
+					'files' => null,
+				],
 				$data['commits'] ?? []
 			),
 		];

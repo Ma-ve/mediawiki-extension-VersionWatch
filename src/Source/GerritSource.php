@@ -105,7 +105,13 @@ class GerritSource extends GitSource {
 		$log = $this->decodeJson( $response )['log'] ?? [];
 		return [
 			'total' => count( $log ),
-			'authors' => array_map( static fn ( array $entry ) => $entry['author']['name'] ?? '', $log ),
+			'commits' => array_map(
+				static fn ( array $entry ) => [
+					'author' => $entry['author']['name'] ?? '',
+					'files' => null,
+				],
+				$log
+			),
 		];
 	}
 

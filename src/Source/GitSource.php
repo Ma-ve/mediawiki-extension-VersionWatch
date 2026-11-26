@@ -50,8 +50,9 @@ abstract class GitSource {
 	 * @param Repository $repository
 	 * @param string $commit
 	 * @param array $response
-	 * @return array{total:int,authors:string[]} Number of commits on the branch that are not
-	 *  in $commit, and the authors of those commits (possibly not all of them)
+	 * @return array{total:int,commits:array<int,array{author:string,files:?string[]}>} Number of
+	 *  commits on the branch that are not in $commit, and those commits (possibly not all of
+	 *  them) with their author and, if the host lists them, the files they change
 	 * @throws LookupFailure
 	 */
 	abstract protected function parseCompare( Repository $repository, string $commit, array $response ): array;
@@ -148,7 +149,8 @@ abstract class GitSource {
 		array $behind,
 		?string $upstreamVersion
 	): CheckResult {
-		$ignored = count( array_intersect( $behind['authors'], $this->ignoredAuthors ) );
+		$authors = array_column( $behind['commits'], 'author' );
+		$ignored = count( array_intersect( $authors, $this->ignoredAuthors ) );
 		$relevant = $behind['total'] - $ignored;
 
 		if ( $relevant > 0 ) {
