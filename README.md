@@ -37,8 +37,15 @@ Modules that live inside another extension and are loaded as part of it, such as
 `ConfirmEdit/Turnstile`, have no repository of their own. They get the status of the
 extension they belong to.
 
-Commits from the translation bot land on every branch almost daily, so they do not count
-towards *Update available*. See `$wgVersionWatchIgnoredAuthors`.
+Not every commit counts towards *Update available*:
+
+- Commits from the translation bot, which land on every branch almost daily. See
+  `$wgVersionWatchIgnoredAuthors`.
+- For extensions on Wikimedia Gerrit, commits that only change development files: dot files
+  such as `.phpcs.xml`, `package.json`, `package-lock.json`, `composer.json`, `Gruntfile.js`,
+  `tests/` and the like. Wikimedia's library upgrade bot makes many of these, and they do not
+  change how the extension behaves on a wiki. GitHub does not list files per commit, so there
+  every commit counts.
 
 Extensions bundled with the MediaWiki download have no git information, but each MediaWiki
 release tag pins the exact commit of every bundled extension and skin. VersionWatch assumes
