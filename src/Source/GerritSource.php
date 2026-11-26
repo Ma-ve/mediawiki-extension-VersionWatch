@@ -91,7 +91,8 @@ class GerritSource extends GitSource {
 	protected function compareRequest( Repository $repository, string $commit ): array {
 		return $this->request(
 			$repository->path,
-			"+log/$commit..{$repository->branch}?format=JSON&n=" . self::LOG_LIMIT
+			// name-status adds the files each commit changes.
+			"+log/$commit..{$repository->branch}?format=JSON&name-status=1&n=" . self::LOG_LIMIT
 		);
 	}
 
@@ -108,7 +109,13 @@ class GerritSource extends GitSource {
 			'commits' => array_map(
 				static fn ( array $entry ) => [
 					'author' => $entry['author']['name'] ?? '',
-					'files' => null,
+					'files' => array_map(
+						// Deleted files have /dev/null as their new path.
+						static fn ( array $diff ) => $diff['new_path'] === '/dev/null'
+							? $diff['old_path']
+							: $diff['new_path'],
+						$entry['tree_diff'] ?? []
+					),
 				],
 				$log
 			),

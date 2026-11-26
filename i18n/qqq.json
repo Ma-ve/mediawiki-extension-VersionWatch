@@ -59,7 +59,7 @@
 	"versionwatch-note-eol-passed": "Parameters:\n* $1 - date in YYYY-MM-DD format",
 	"versionwatch-note-eol": "Shown when a release branch is unsupported but no end date is known.",
 	"versionwatch-note-commits-behind": "Parameters:\n* $1 - number of commits\n* $2 - branch name, such as REL1_43",
-	"versionwatch-note-only-ignored-commits": "Shown when all newer commits are from authors such as the translation bot, which do not count as updates.\n\nParameters:\n* $1 - number of commits",
+	"versionwatch-note-only-ignored-commits": "Shown when all newer commits are from ignored authors, such as the translation bot, or only change files used for development, such as linter configuration and tests.\n\nParameters:\n* $1 - number of commits",
 	"versionwatch-note-no-branch": "Parameters:\n* $1 - branch name, such as REL1_43",
 	"versionwatch-note-repo-not-found": "Parameters:\n* $1 - repository path\n* $2 - host name",
 	"versionwatch-note-invalid-setting": "Shown when the entry for an extension or skin on the settings page cannot be understood, for example after a manual edit.",

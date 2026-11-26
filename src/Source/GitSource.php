@@ -149,8 +149,8 @@ abstract class GitSource {
 		array $behind,
 		?string $upstreamVersion
 	): CheckResult {
-		$authors = array_column( $behind['commits'], 'author' );
-		$ignored = count( array_intersect( $authors, $this->ignoredAuthors ) );
+		$ignored = count( array_filter( $behind['commits'], [ $this, 'isIgnored' ] ) );
+		// Commits the host did not list are counted, since nothing is known about them.
 		$relevant = $behind['total'] - $ignored;
 
 		if ( $relevant > 0 ) {
@@ -177,6 +177,17 @@ abstract class GitSource {
 			$params,
 			$head['sha']
 		);
+	}
+
+	/**
+	 * Whether a commit does not make an extension outdated: it is by an ignored author, such
+	 * as the translation bot, or only changes development files.
+	 *
+	 * @param array{author:string,files:?string[]} $commit
+	 */
+	private function isIgnored( array $commit ): bool {
+		return in_array( $commit['author'], $this->ignoredAuthors, true )
+			|| ( $commit['files'] !== null && DevelopmentFiles::containsAll( $commit['files'] ) );
 	}
 
 	private function evaluateVersion( Component $component, array $head, array $manifest ): CheckResult {
