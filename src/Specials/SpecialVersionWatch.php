@@ -96,9 +96,10 @@ class SpecialVersionWatch extends SpecialPage {
 	private function showReport( Report $report ): void {
 		$out = $this->getOutput();
 
+		// Not dateTimeParams(), which ignores the user's timezone.
 		$out->addHTML( Html::element( 'p', [],
 			$this->msg( 'versionwatch-last-checked' )
-				->dateTimeParams( $report->timestamp )
+				->plaintextParams( $this->getLanguage()->userTimeAndDate( $report->timestamp, $this->getUser() ) )
 				->text()
 		) );
 
