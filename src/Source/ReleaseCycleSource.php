@@ -28,6 +28,9 @@ class ReleaseCycleSource {
 		'SQLite' => 'sqlite',
 	];
 
+	/** @var array<string,array|LookupFailure> Release cycles, or why they could not be fetched, by product */
+	private array $cycles = [];
+
 	public function __construct(
 		private readonly HttpRequestFactory $httpRequestFactory,
 	) {
@@ -38,19 +41,10 @@ class ReleaseCycleSource {
 	 * @return CheckResult[]
 	 */
 	public function check( array $components ): array {
-		$requests = [];
-		foreach ( $components as $component ) {
-			$product = self::PRODUCTS[$component->name] ?? null;
-			if ( $product !== null ) {
-				$requests[$product] = [
-					'method' => 'GET',
-					'url' => 'https://' . self::HOST . "/api/$product.json",
-				];
-			}
-		}
-		$responses = $requests
-			? $this->httpRequestFactory->createMultiClient()->runMulti( $requests )
-			: [];
+		$this->fetch( array_filter( array_map(
+			static fn ( Component $component ) => self::PRODUCTS[$component->name] ?? null,
+			$components
+		) ) );
 
 		$results = [];
 		foreach ( $components as $component ) {
@@ -60,13 +54,51 @@ class ReleaseCycleSource {
 				continue;
 			}
 			try {
-				$cycles = $this->parseResponse( $responses[$product]['response'] );
-				$results[] = $this->evaluate( $component, $cycles );
+				$results[] = $this->evaluate( $component, $this->getCycles( $product ) );
 			} catch ( LookupFailure $e ) {
 				$results[] = CheckResult::unknown( $component, $e->messageKey, $e->messageParams );
 			}
 		}
 		return $results;
+	}
+
+	/**
+	 * Download the release cycles of products that were not downloaded yet.
+	 *
+	 * @param string[] $products endoflife.date product identifiers
+	 */
+	private function fetch( array $products ): void {
+		$requests = [];
+		foreach ( array_unique( $products ) as $product ) {
+			if ( !isset( $this->cycles[$product] ) ) {
+				$requests[$product] = [
+					'method' => 'GET',
+					'url' => 'https://' . self::HOST . "/api/$product.json",
+				];
+			}
+		}
+		if ( !$requests ) {
+			return;
+		}
+		foreach ( $this->httpRequestFactory->createMultiClient()->runMulti( $requests ) as $product => $request ) {
+			try {
+				$this->cycles[$product] = $this->parseResponse( $request['response'] );
+			} catch ( LookupFailure $e ) {
+				$this->cycles[$product] = $e;
+			}
+		}
+	}
+
+	/**
+	 * @throws LookupFailure
+	 */
+	private function getCycles( string $product ): array {
+		$this->fetch( [ $product ] );
+		$cycles = $this->cycles[$product];
+		if ( $cycles instanceof LookupFailure ) {
+			throw $cycles;
+		}
+		return $cycles;
 	}
 
 	private function parseResponse( array $response ): array {
