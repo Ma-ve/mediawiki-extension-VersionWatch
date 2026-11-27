@@ -16,6 +16,8 @@
 namespace MediaWiki\Extension\VersionWatch\Maintenance;
 
 use MediaWiki\Extension\VersionWatch\CheckResult;
+use MediaWiki\Extension\VersionWatch\Upgrade\UpgradeReport;
+use MediaWiki\Extension\VersionWatch\Upgrade\UpgradeResult;
 use MediaWiki\Maintenance\Maintenance;
 use MediaWiki\Message\Message;
 
@@ -49,6 +51,34 @@ class CheckVersions extends Maintenance {
 		$this->printTable( $results );
 		$this->printSecurityFixes( $results );
 		$this->printUnmetRequirements( $results );
+		// Not urgent, so not part of the problems that cron should mail about.
+		if ( $report->upgrade !== null && !$this->hasOption( 'problems-only' ) ) {
+			$this->printUpgrade( $report->upgrade );
+		}
+	}
+
+	private function printUpgrade( UpgradeReport $upgrade ): void {
+		$this->output( "\nUpgrading to MediaWiki {$upgrade->version}" );
+		if ( !$upgrade->phpSupported ) {
+			$this->output( " needs PHP {$upgrade->phpRequirement}; this server has " . PHP_VERSION );
+		}
+		$this->output( ":\n" );
+		$blocking = array_filter(
+			$upgrade->getSortedResults(),
+			static fn ( UpgradeResult $r ) => $r->needsAttention()
+		);
+		if ( !$blocking ) {
+			$this->output( "  Every extension and skin that could be checked is ready.\n" );
+		}
+		foreach ( $blocking as $result ) {
+			$reason = $result->note !== null
+				? wfMessage( $result->note, ...$result->noteParams )->inLanguage( 'en' )->text()
+				: implode( ', ', array_map(
+					static fn ( array $r ) => "needs {$r['name']} {$r['constraint']}",
+					$result->unmetRequirements
+				) );
+			$this->output( "  {$result->component->name}: $reason\n" );
+		}
 	}
 
 	/**

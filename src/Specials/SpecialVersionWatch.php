@@ -12,6 +12,8 @@ use MediaWiki\Extension\VersionWatch\ReportStore;
 use MediaWiki\Extension\VersionWatch\Repository;
 use MediaWiki\Extension\VersionWatch\RepositoryResolver;
 use MediaWiki\Extension\VersionWatch\RepositorySettings;
+use MediaWiki\Extension\VersionWatch\Upgrade\UpgradeReport;
+use MediaWiki\Extension\VersionWatch\Upgrade\UpgradeResult;
 use MediaWiki\Html\Html;
 use MediaWiki\HTMLForm\HTMLForm;
 use MediaWiki\Message\Message;
@@ -132,6 +134,92 @@ class SpecialVersionWatch extends SpecialPage {
 				) );
 			}
 		}
+
+		if ( $report->upgrade !== null ) {
+			$core = array_values( array_filter(
+				$results,
+				static fn ( CheckResult $r ) => $r->component->type === Component::CORE
+			) )[0] ?? null;
+			$this->showUpgrade( $report->upgrade, $core?->eol );
+		}
+	}
+
+	/**
+	 * @param UpgradeReport $upgrade
+	 * @param string|null $installedEol End of support date (Y-m-d) of the installed release
+	 */
+	private function showUpgrade( UpgradeReport $upgrade, ?string $installedEol ): void {
+		$out = $this->getOutput();
+		$out->addHTML( Html::element( 'h2', [],
+			$this->msg( 'versionwatch-upgrade-heading', $upgrade->version )->text()
+		) );
+
+		$intro = [ $this->msg( 'versionwatch-upgrade-intro', $upgrade->version )->escaped() ];
+		if ( $upgrade->eol !== null ) {
+			$intro[] = $this->msg( $upgrade->lts ? 'versionwatch-upgrade-lts-until' : 'versionwatch-upgrade-until' )
+				->plaintextParams( $this->formatDay( $upgrade->eol ) )
+				->escaped();
+			// Moving from a long-term support release to a newer short-term one can shorten support.
+			if ( $installedEol !== null && $installedEol > $upgrade->eol ) {
+				$intro[] = $this->msg( 'versionwatch-upgrade-shorter-support' )
+					->plaintextParams( $this->formatDay( $installedEol ) )
+					->escaped();
+			}
+		}
+		if ( $upgrade->phpRequirement !== null ) {
+			$intro[] = Html::rawElement( 'span',
+				[ 'class' => $upgrade->phpSupported ? [] : [ 'ext-versionwatch-requirement' ] ],
+				$this->msg( $upgrade->phpSupported
+					? 'versionwatch-upgrade-php-ok'
+					: 'versionwatch-upgrade-php-missing'
+				)->plaintextParams( $upgrade->phpRequirement, PHP_VERSION )
+					->escaped()
+			);
+		}
+		$out->addHTML( Html::rawElement( 'p', [], implode( ' ', $intro ) ) );
+
+		$results = $upgrade->getSortedResults();
+		$blocking = count( array_filter( $results, static fn ( UpgradeResult $r ) => $r->needsAttention() ) );
+		$out->addHTML( Html::rawElement( 'p', [],
+			$this->msg( $blocking ? 'versionwatch-upgrade-blocking' : 'versionwatch-upgrade-none-blocking' )
+				->numParams( $blocking )
+				->params( $upgrade->version )
+				->parse()
+		) );
+
+		$rows = '';
+		foreach ( $results as $result ) {
+			$details = $result->note === null ? '' : $this->formatMessage( $result->note, $result->noteParams );
+			foreach ( $result->unmetRequirements as $requirement ) {
+				$details .= Html::rawElement( 'p', [ 'class' => 'ext-versionwatch-requirement' ],
+					$this->msg( 'versionwatch-upgrade-note-requires' )
+						->plaintextParams( $requirement['name'], $requirement['constraint'], $requirement['installed'] )
+						->parse()
+				);
+			}
+			// Messages used: versionwatch-upgrade-status-ready, versionwatch-upgrade-status-bundled,
+			// versionwatch-upgrade-status-no-branch, versionwatch-upgrade-status-incompatible,
+			// versionwatch-upgrade-status-unknown, versionwatch-upgrade-status-skipped
+			// Classes used: ext-versionwatch-upgrade-ready, ext-versionwatch-upgrade-bundled,
+			// ext-versionwatch-upgrade-no-branch, ext-versionwatch-upgrade-incompatible,
+			// ext-versionwatch-upgrade-unknown, ext-versionwatch-upgrade-skipped
+			$rows .= Html::rawElement( 'tr', [],
+				Html::element( 'td', [], $result->component->name ) .
+				Html::rawElement( 'td', [], Html::element( 'span',
+					[ 'class' => [ 'ext-versionwatch-status', "ext-versionwatch-upgrade-{$result->status}" ] ],
+					$this->msg( "versionwatch-upgrade-status-{$result->status}" )->text()
+				) ) .
+				Html::rawElement( 'td', [], $details )
+			);
+		}
+		$header = '';
+		foreach ( [ 'name', 'status', 'note' ] as $column ) {
+			$header .= Html::element( 'th', [], $this->msg( "versionwatch-column-$column" )->text() );
+		}
+		$out->addHTML( Html::rawElement( 'table', [ 'class' => 'wikitable ext-versionwatch-table' ],
+			Html::rawElement( 'thead', [], Html::rawElement( 'tr', [], $header ) ) .
+			Html::rawElement( 'tbody', [], $rows )
+		) );
 	}
 
 	/**
@@ -278,17 +366,32 @@ class SpecialVersionWatch extends SpecialPage {
 	}
 
 	private function formatNote( CheckResult $result ): string {
-		if ( $result->note === null ) {
-			return '';
-		}
-		// Parameters come from remote responses and settings, so never parse them as wikitext.
-		$params = array_map(
+		return $result->note === null ? '' : $this->formatMessage( $result->note, $result->noteParams );
+	}
+
+	/**
+	 * @param string $date Y-m-d
+	 */
+	private function formatDay( string $date ): string {
+		return $this->getLanguage()->userDate(
+			ConvertibleTimestamp::convert( TS_MW, $date . 'T00:00:00Z' ),
+			$this->getUser()
+		);
+	}
+
+	/**
+	 * @param string $key
+	 * @param array $params Scalar parameters from remote responses or settings
+	 * @return string HTML
+	 */
+	private function formatMessage( string $key, array $params ): string {
+		// Never parse parameters as wikitext.
+		return $this->msg( $key, ...array_map(
 			static fn ( $param ) => is_int( $param )
 				? Message::numParam( $param )
 				: Message::plaintextParam( (string)$param ),
-			$result->noteParams
-		);
-		return $this->msg( $result->note, ...$params )->parse();
+			$params
+		) )->parse();
 	}
 
 	/**

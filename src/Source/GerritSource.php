@@ -99,6 +99,24 @@ class GerritSource extends GitSource {
 	}
 
 	/**
+	 * The PHP versions a MediaWiki release supports, from its composer.json.
+	 *
+	 * @param string $mwVersion Release version, such as "1.46.3"
+	 * @return string|null Version constraint, such as ">=8.3.0", or null if unknown
+	 */
+	public function getCorePhpRequirement( string $mwVersion ): ?string {
+		$response = $this->httpRequestFactory->createMultiClient()->run(
+			$this->request( 'mediawiki/core', "+/refs/tags/$mwVersion/composer.json?format=TEXT" )
+		);
+		if ( $response['code'] !== 200 ) {
+			return null;
+		}
+		$composer = json_decode( base64_decode( $response['body'] ), true );
+		$php = $composer['require']['php'] ?? null;
+		return is_string( $php ) ? $php : null;
+	}
+
+	/**
 	 * Where to see every change in MediaWiki between two releases.
 	 */
 	public static function getCoreChangesUrl( string $installed, string $latest ): string {

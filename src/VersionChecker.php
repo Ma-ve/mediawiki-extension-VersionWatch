@@ -5,6 +5,8 @@ namespace MediaWiki\Extension\VersionWatch;
 use MediaWiki\Extension\VersionWatch\Source\GerritSource;
 use MediaWiki\Extension\VersionWatch\Source\GitHubSource;
 use MediaWiki\Extension\VersionWatch\Source\ReleaseCycleSource;
+use MediaWiki\Extension\VersionWatch\Upgrade\UpgradeChecker;
+use MediaWiki\Extension\VersionWatch\Upgrade\UpgradeReport;
 use Wikimedia\Timestamp\ConvertibleTimestamp;
 
 /**
@@ -18,6 +20,7 @@ class VersionChecker {
 		private readonly ReleaseCycleSource $releaseCycleSource,
 		private readonly GerritSource $gerritSource,
 		private readonly GitHubSource $gitHubSource,
+		private readonly ?UpgradeChecker $upgradeChecker = null,
 	) {
 	}
 
@@ -26,6 +29,7 @@ class VersionChecker {
 		$gerritTargets = [];
 		$gitHubTargets = [];
 		$notChecked = [];
+		$skipped = [];
 		$modules = [];
 		$coreVersion = null;
 		$resolver = $this->repositorySettings->getResolver();
@@ -50,6 +54,7 @@ class VersionChecker {
 			}
 			if ( $repository === null ) {
 				$notChecked[] = new CheckResult( $component, CheckResult::SKIPPED );
+				$skipped[] = $component;
 			} elseif ( $repository->host === Repository::GITHUB ) {
 				$gitHubTargets[] = [ $component, $repository ];
 			} else {
@@ -69,8 +74,36 @@ class VersionChecker {
 		);
 		return new Report(
 			ConvertibleTimestamp::now( TS_MW ),
-			array_merge( $results, $this->followParents( $modules, $results ) )
+			array_merge( $results, $this->followParents( $modules, $results ) ),
+			$coreVersion === null ? null : $this->checkUpgrade(
+				$coreVersion, array_merge( $gerritTargets, $gitHubTargets ), $skipped, $modules
+			)
 		);
+	}
+
+	/**
+	 * Whether this wiki is ready for the newest MediaWiki release, if that is on a newer
+	 * release branch than the installed one.
+	 *
+	 * @param string $coreVersion
+	 * @param array<int,array{0:Component,1:Repository}> $targets
+	 * @param Component[] $skipped
+	 * @param Component[] $modules
+	 */
+	private function checkUpgrade(
+		string $coreVersion,
+		array $targets,
+		array $skipped,
+		array $modules
+	): ?UpgradeReport {
+		$release = $this->upgradeChecker ? $this->releaseCycleSource->getNewestMediaWikiRelease() : null;
+		$installedBranch = RepositoryResolver::releaseBranchFor( $coreVersion );
+		if ( $release === null || RepositoryResolver::releaseBranchFor( $release['latest'] ) === $installedBranch
+			|| version_compare( $release['latest'], $coreVersion, '<' )
+		) {
+			return null;
+		}
+		return $this->upgradeChecker->check( $release, $installedBranch, $targets, $skipped, $modules );
 	}
 
 	/**

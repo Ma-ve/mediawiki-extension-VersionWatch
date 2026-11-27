@@ -117,6 +117,39 @@ abstract class GitSource {
 		return $results;
 	}
 
+	/**
+	 * Fetch the extension.json or skin.json of each target's branch.
+	 *
+	 * @param array<int,array{0:Component,1:Repository}> $targets
+	 * @return array<int,array|LookupFailure|null> The manifest, why it could not be fetched, or
+	 *  null if the branch or the file does not exist
+	 */
+	public function getManifests( array $targets ): array {
+		$requests = [];
+		foreach ( $targets as $i => [ $component, $repository ] ) {
+			$requests[$i] = $this->manifestRequest( $repository, $component->getManifestFile() );
+		}
+		if ( !$requests ) {
+			return [];
+		}
+		$responses = $this->httpRequestFactory->createMultiClient()
+			->runMulti( $requests, [ 'maxConnsPerHost' => self::MAX_CONNECTIONS_PER_HOST ] );
+
+		$manifests = [];
+		foreach ( $responses as $i => $request ) {
+			if ( $request['response']['code'] === 404 ) {
+				$manifests[$i] = null;
+				continue;
+			}
+			try {
+				$manifests[$i] = $this->parseManifest( $request['response'] );
+			} catch ( LookupFailure $e ) {
+				$manifests[$i] = $e;
+			}
+		}
+		return $manifests;
+	}
+
 	private function evaluate(
 		Component $component,
 		Repository $repository,

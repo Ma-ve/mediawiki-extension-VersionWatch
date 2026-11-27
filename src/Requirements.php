@@ -45,6 +45,13 @@ class Requirements {
 		return $unmet;
 	}
 
+	/**
+	 * @param string $constraint Supported PHP versions, such as ">=8.3.0"
+	 */
+	public function isPhpSupported( string $constraint ): bool {
+		return self::satisfies( $this->phpVersion, $constraint );
+	}
+
 	private static function satisfies( string $version, string $constraint ): bool {
 		// Vendor suffixes such as "-1ubuntu" are not semantic versions.
 		$version = preg_match( '/^\d+(\.\d+)*/', $version, $m ) ? $m[0] : $version;

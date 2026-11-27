@@ -63,6 +63,40 @@ class ReleaseCycleSource {
 	}
 
 	/**
+	 * The newest MediaWiki release branch that is out and still supported.
+	 *
+	 * @return array{cycle:string,latest:string,eol:?string,lts:bool}|null Null if the release
+	 *  data could not be fetched
+	 */
+	public function getNewestMediaWikiRelease(): ?array {
+		try {
+			$cycles = $this->getCycles( self::PRODUCTS['MediaWiki'] );
+		} catch ( LookupFailure ) {
+			return null;
+		}
+		$today = substr( ConvertibleTimestamp::now( TS_ISO_8601 ), 0, 10 );
+
+		$newest = null;
+		foreach ( $cycles as $cycle ) {
+			$eol = $cycle['eol'] ?? false;
+			$released = ( $cycle['releaseDate'] ?? $today ) <= $today;
+			$supported = is_string( $eol ) ? $eol > $today : $eol === false;
+			if ( !$released || !$supported || !isset( $cycle['cycle'] ) || !isset( $cycle['latest'] ) ) {
+				continue;
+			}
+			if ( $newest === null || version_compare( (string)$cycle['cycle'], $newest['cycle'], '>' ) ) {
+				$newest = [
+					'cycle' => (string)$cycle['cycle'],
+					'latest' => (string)$cycle['latest'],
+					'eol' => is_string( $eol ) ? $eol : null,
+					'lts' => (bool)( $cycle['lts'] ?? false ),
+				];
+			}
+		}
+		return $newest;
+	}
+
+	/**
 	 * Download the release cycles of products that were not downloaded yet.
 	 *
 	 * @param string[] $products endoflife.date product identifiers

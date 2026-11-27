@@ -35,6 +35,23 @@
 	}
 }
 
+.ext-versionwatch-upgrade {
+	&-ready,
+	&-bundled {
+		background-color: @background-color-success-subtle;
+	}
+
+	&-no-branch,
+	&-incompatible {
+		background-color: @background-color-error-subtle;
+	}
+
+	&-unknown,
+	&-skipped {
+		background-color: @background-color-disabled-subtle;
+	}
+}
+
 .ext-versionwatch-changes {
 	margin-top: @spacing-25;
 

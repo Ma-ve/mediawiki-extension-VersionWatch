@@ -2,6 +2,8 @@
 
 namespace MediaWiki\Extension\VersionWatch;
 
+use MediaWiki\Extension\VersionWatch\Upgrade\UpgradeReport;
+
 /**
  * The results of one full check run.
  */
@@ -10,10 +12,13 @@ class Report {
 	/**
 	 * @param string $timestamp When the check ran, in TS_MW format
 	 * @param CheckResult[] $results
+	 * @param UpgradeReport|null $upgrade Readiness for the newest MediaWiki release, if a
+	 *  newer release branch than the installed one exists
 	 */
 	public function __construct(
 		public readonly string $timestamp,
 		public readonly array $results,
+		public readonly ?UpgradeReport $upgrade = null,
 	) {
 	}
 
@@ -34,6 +39,7 @@ class Report {
 		return [
 			'timestamp' => $this->timestamp,
 			'results' => array_map( static fn ( CheckResult $r ) => $r->toArray(), $this->results ),
+			'upgrade' => $this->upgrade?->toArray(),
 		];
 	}
 
@@ -41,6 +47,8 @@ class Report {
 		return new self(
 			$data['timestamp'],
 			array_map( [ CheckResult::class, 'newFromArray' ], $data['results'] ),
+			// Not present in reports stored by earlier versions
+			isset( $data['upgrade'] ) ? UpgradeReport::newFromArray( $data['upgrade'] ) : null,
 		);
 	}
 }
