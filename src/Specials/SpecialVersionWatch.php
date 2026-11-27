@@ -505,7 +505,9 @@ class SpecialVersionWatch extends SpecialPage {
 			$out->addHTML( Html::warningBox( $this->msg( 'versionwatch-settings-invalid' )->parse() ) );
 		}
 		$default = $resolver->getDefault( $component );
-		[ $source, $path, $branch ] = $this->getFormDefaults( $this->repositorySettings->get( $component->name ) );
+		[ $source, $path, $branch ] = $this->getFormDefaults(
+			$this->repositorySettings->get( $component->name ) ?? $resolver->getKnown( $component )
+		);
 
 		$form = HTMLForm::factory( 'ooui', [
 			'source' => [
