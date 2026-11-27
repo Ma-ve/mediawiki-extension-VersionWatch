@@ -7,7 +7,7 @@
 |author          = Mave
 |description     = Tells administrators when MediaWiki, PHP, the database server, extensions or skins need updating, and flags security fixes
 |image           =
-|version         = 1.0.3
+|version         = 0.5.0
 |update          =
 |mediawiki       = 1.43+
 |php             = 8.1+
