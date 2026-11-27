@@ -1,5 +1,6 @@
 <?php
 
+use MediaWiki\Extension\VersionWatch\CheckRunner;
 use MediaWiki\Extension\VersionWatch\InstalledComponents;
 use MediaWiki\Extension\VersionWatch\ReportStore;
 use MediaWiki\Extension\VersionWatch\RepositoryResolver;
@@ -14,6 +15,13 @@ use MediaWiki\Registration\ExtensionRegistry;
 
 /** @phpcs-require-sorted-array */
 return [
+	'VersionWatch.CheckRunner' => static function ( MediaWikiServices $services ): CheckRunner {
+		return new CheckRunner(
+			$services->get( 'VersionWatch.VersionChecker' ),
+			$services->get( 'VersionWatch.ReportStore' )
+		);
+	},
+
 	'VersionWatch.InstalledComponents' => static function ( MediaWikiServices $services ): InstalledComponents {
 		$config = $services->getMainConfig();
 		return new InstalledComponents(

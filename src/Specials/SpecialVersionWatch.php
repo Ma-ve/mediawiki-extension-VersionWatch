@@ -3,6 +3,7 @@
 namespace MediaWiki\Extension\VersionWatch\Specials;
 
 use MediaWiki\Extension\VersionWatch\CheckResult;
+use MediaWiki\Extension\VersionWatch\CheckRunner;
 use MediaWiki\Extension\VersionWatch\Component;
 use MediaWiki\Extension\VersionWatch\InstalledComponents;
 use MediaWiki\Extension\VersionWatch\InvalidSettingException;
@@ -11,7 +12,6 @@ use MediaWiki\Extension\VersionWatch\ReportStore;
 use MediaWiki\Extension\VersionWatch\Repository;
 use MediaWiki\Extension\VersionWatch\RepositoryResolver;
 use MediaWiki\Extension\VersionWatch\RepositorySettings;
-use MediaWiki\Extension\VersionWatch\VersionChecker;
 use MediaWiki\Html\Html;
 use MediaWiki\HTMLForm\HTMLForm;
 use MediaWiki\Message\Message;
@@ -47,7 +47,7 @@ class SpecialVersionWatch extends SpecialPage {
 	private ?Report $freshReport = null;
 
 	public function __construct(
-		private readonly VersionChecker $versionChecker,
+		private readonly CheckRunner $checkRunner,
 		private readonly ReportStore $reportStore,
 		private readonly InstalledComponents $installedComponents,
 		private readonly RepositorySettings $repositorySettings,
@@ -74,7 +74,7 @@ class SpecialVersionWatch extends SpecialPage {
 			->setWrapperLegend( false )
 			->setSubmitTextMsg( 'versionwatch-check-now' )
 			->setSubmitCallback( function () {
-				$this->freshReport = $this->runCheck();
+				$this->freshReport = $this->checkRunner->run();
 				return true;
 			} )
 			->show();
@@ -85,12 +85,6 @@ class SpecialVersionWatch extends SpecialPage {
 			return;
 		}
 		$this->showReport( $report );
-	}
-
-	private function runCheck(): Report {
-		$report = $this->versionChecker->run();
-		$this->reportStore->save( $report );
-		return $report;
 	}
 
 	private function showReport( Report $report ): void {
@@ -421,7 +415,7 @@ class SpecialVersionWatch extends SpecialPage {
 				->text()
 		);
 		if ( $status->isOK() ) {
-			$this->runCheck();
+			$this->checkRunner->run();
 		}
 		return Status::wrap( $status );
 	}

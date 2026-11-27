@@ -40,8 +40,7 @@ class CheckVersions extends Maintenance {
 
 	public function execute() {
 		$services = $this->getServiceContainer();
-		$report = $services->get( 'VersionWatch.VersionChecker' )->run();
-		$services->get( 'VersionWatch.ReportStore' )->save( $report );
+		$report = $services->get( 'VersionWatch.CheckRunner' )->run();
 
 		$results = $report->getSortedResults();
 		if ( $this->hasOption( 'problems-only' ) ) {
