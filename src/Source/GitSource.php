@@ -5,6 +5,7 @@ namespace MediaWiki\Extension\VersionWatch\Source;
 use MediaWiki\Extension\VersionWatch\CheckResult;
 use MediaWiki\Extension\VersionWatch\Component;
 use MediaWiki\Extension\VersionWatch\Repository;
+use MediaWiki\Extension\VersionWatch\Requirements;
 use MediaWiki\Http\HttpRequestFactory;
 
 /**
@@ -25,10 +26,13 @@ abstract class GitSource {
 	/**
 	 * @param HttpRequestFactory $httpRequestFactory
 	 * @param string[] $ignoredAuthors Authors whose commits do not make an extension outdated
+	 * @param Requirements|null $requirements To warn when an update needs a newer PHP or
+	 *  MediaWiki; null to not check
 	 */
 	public function __construct(
 		protected readonly HttpRequestFactory $httpRequestFactory,
 		private readonly array $ignoredAuthors,
+		private readonly ?Requirements $requirements = null,
 	) {
 	}
 
@@ -203,7 +207,8 @@ abstract class GitSource {
 			latestCommit: $head['sha'],
 			changes: $changes,
 			changesUrl: $relevant > 0 ? $repository->getChangesUrl( (string)$component->commit ) : null,
-			downloadUrl: $relevant > 0 ? $this->getDownloadUrl( $component, $repository ) : null
+			downloadUrl: $relevant > 0 ? $this->getDownloadUrl( $component, $repository ) : null,
+			unmetRequirements: $relevant > 0 ? $this->getUnmetRequirements( $manifest ) : []
 		);
 	}
 
@@ -237,8 +242,17 @@ abstract class GitSource {
 			latest: $latest,
 			latestDate: $head['date'],
 			latestCommit: $head['sha'],
-			downloadUrl: $status === CheckResult::OUTDATED ? $this->getDownloadUrl( $component, $repository ) : null
+			downloadUrl: $status === CheckResult::OUTDATED ? $this->getDownloadUrl( $component, $repository ) : null,
+			unmetRequirements: $status === CheckResult::OUTDATED ? $this->getUnmetRequirements( $manifest ) : []
 		);
+	}
+
+	/**
+	 * @param array $manifest Upstream extension.json or skin.json
+	 * @return array<int,array{name:string,constraint:string,installed:string}>
+	 */
+	private function getUnmetRequirements( array $manifest ): array {
+		return $this->requirements?->getUnmet( $manifest['requires'] ?? null ) ?? [];
 	}
 
 	/**

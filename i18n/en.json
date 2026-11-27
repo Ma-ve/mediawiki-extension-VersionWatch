@@ -67,6 +67,7 @@
 	"versionwatch-note-commits-behind": "{{PLURAL:$1|One newer change|$1 newer changes}} on the $2 branch.",
 	"versionwatch-note-security-changes": "{{PLURAL:$1|One newer change|$1 newer changes}} on the $2 branch, including {{PLURAL:$3|a security fix|$3 security fixes}}.",
 	"versionwatch-note-core-security": "MediaWiki $1 includes {{PLURAL:$2|a security fix|$2 security fixes}}.",
+	"versionwatch-note-requires": "The update needs $1 $2, but this wiki has $3.",
 	"versionwatch-note-only-ignored-commits": "{{PLURAL:$1|Only one newer change, which does not count as an update: a translation update or a change to development tools.|Only $1 newer changes, which do not count as updates: translation updates or changes to development tools.}}",
 	"versionwatch-note-no-branch": "The upstream repository has no $1 branch. The extension may be unmaintained, or use a different branch, which you can set with the change link.",
 	"versionwatch-note-repo-not-found": "Repository $1 was not found on $2. Use the change link to set where it lives, or to stop checking it.",

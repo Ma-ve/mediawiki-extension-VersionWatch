@@ -48,6 +48,21 @@ class CheckVersions extends Maintenance {
 		}
 		$this->printTable( $results );
 		$this->printSecurityFixes( $results );
+		$this->printUnmetRequirements( $results );
+	}
+
+	/**
+	 * @param CheckResult[] $results
+	 */
+	private function printUnmetRequirements( array $results ): void {
+		foreach ( $results as $result ) {
+			foreach ( $result->unmetRequirements as $requirement ) {
+				$this->output( "\n{$result->component->name}: " . wfMessage( 'versionwatch-note-requires' )
+					->plaintextParams( $requirement['name'], $requirement['constraint'], $requirement['installed'] )
+					->inLanguage( 'en' )
+					->text() . "\n" );
+			}
+		}
 	}
 
 	/**

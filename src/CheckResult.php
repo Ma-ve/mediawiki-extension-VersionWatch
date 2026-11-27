@@ -38,6 +38,8 @@ class CheckResult {
 	 *  possibly not all of them
 	 * @param string|null $changesUrl Where to see all newer upstream changes
 	 * @param string|null $downloadUrl Where to get the update
+	 * @param array<int,array{name:string,constraint:string,installed:string}> $unmetRequirements
+	 *  What the update needs that this server does not have
 	 */
 	public function __construct(
 		public readonly Component $component,
@@ -51,6 +53,7 @@ class CheckResult {
 		public readonly array $changes = [],
 		public readonly ?string $changesUrl = null,
 		public readonly ?string $downloadUrl = null,
+		public readonly array $unmetRequirements = [],
 	) {
 	}
 
@@ -75,6 +78,7 @@ class CheckResult {
 			'changes' => $this->changes,
 			'changesUrl' => $this->changesUrl,
 			'downloadUrl' => $this->downloadUrl,
+			'unmetRequirements' => $this->unmetRequirements,
 		];
 	}
 
@@ -92,6 +96,7 @@ class CheckResult {
 			$data['changes'] ?? [],
 			$data['changesUrl'] ?? null,
 			$data['downloadUrl'] ?? null,
+			$data['unmetRequirements'] ?? [],
 		);
 	}
 }

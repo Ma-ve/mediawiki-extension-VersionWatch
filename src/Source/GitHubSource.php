@@ -4,6 +4,7 @@ namespace MediaWiki\Extension\VersionWatch\Source;
 
 use MediaWiki\Extension\VersionWatch\Component;
 use MediaWiki\Extension\VersionWatch\Repository;
+use MediaWiki\Extension\VersionWatch\Requirements;
 use MediaWiki\Http\HttpRequestFactory;
 use Wikimedia\Timestamp\ConvertibleTimestamp;
 
@@ -19,13 +20,15 @@ class GitHubSource extends GitSource {
 	 * @param HttpRequestFactory $httpRequestFactory
 	 * @param string[] $ignoredAuthors
 	 * @param string|null $token Personal access token, to raise the rate limit
+	 * @param Requirements|null $requirements
 	 */
 	public function __construct(
 		HttpRequestFactory $httpRequestFactory,
 		array $ignoredAuthors,
 		private readonly ?string $token,
+		?Requirements $requirements = null,
 	) {
-		parent::__construct( $httpRequestFactory, $ignoredAuthors );
+		parent::__construct( $httpRequestFactory, $ignoredAuthors, $requirements );
 	}
 
 	protected function getDownloadUrl( Component $component, Repository $repository ): ?string {

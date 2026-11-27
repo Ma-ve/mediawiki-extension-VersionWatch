@@ -225,6 +225,13 @@ class SpecialVersionWatch extends SpecialPage {
 	 */
 	private function formatDetails( CheckResult $result ): string {
 		$html = $this->formatNote( $result );
+		foreach ( $result->unmetRequirements as $requirement ) {
+			$html .= Html::rawElement( 'p', [ 'class' => 'ext-versionwatch-requirement' ],
+				$this->msg( 'versionwatch-note-requires' )
+					->plaintextParams( $requirement['name'], $requirement['constraint'], $requirement['installed'] )
+					->parse()
+			);
+		}
 		if ( $result->changes ) {
 			$html .= $this->formatChanges( $result );
 		}
