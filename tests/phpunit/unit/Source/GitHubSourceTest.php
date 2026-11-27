@@ -154,4 +154,13 @@ class GitHubSourceTest extends MediaWikiUnitTestCase {
 			$result->changesUrl
 		);
 	}
+
+	public function testDownloadIsZipOfBranch() {
+		$result = $this->check( [
+			self::HEAD_URL => self::json( self::HEAD_RESPONSE ),
+			self::COMPARE_URL => self::json( [ 'ahead_by' => 3, 'commits' => [] ] ),
+		] );
+
+		$this->assertSame( 'https://github.com/example/GTag/archive/HEAD.zip', $result->downloadUrl );
+	}
 }

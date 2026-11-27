@@ -66,6 +66,7 @@ class ReleaseCycleSourceTest extends MediaWikiUnitTestCase {
 
 		$this->assertSame( CheckResult::OUTDATED, $result->status );
 		$this->assertSame( '1.43.12', $result->latest );
+		$this->assertSame( 'https://www.mediawiki.org/wiki/Download', $result->downloadUrl );
 	}
 
 	public function testBranchPastEndOfLifeIsUnsupported() {

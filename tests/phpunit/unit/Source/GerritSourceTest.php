@@ -310,4 +310,58 @@ class GerritSourceTest extends MediaWikiUnitTestCase {
 
 		$this->assertNull( $source->getCoreSecurityFixes( '1.44.0-alpha', '1.43.13' ) );
 	}
+
+	public function testDownloadFromExtensionDistributor() {
+		$result = $this->checkOne( self::gitCheckout(), [
+			self::HEAD_URL => self::gitilesJson( self::HEAD_RESPONSE ),
+			self::LOG_URL => self::logOf( 'Umherirrender' ),
+		] );
+
+		$this->assertSame( 'https://www.mediawiki.org/wiki/Special:ExtensionDistributor/Echo', $result->downloadUrl );
+	}
+
+	public function testNoDownloadWhenUpToDate() {
+		$result = $this->checkOne( self::gitCheckout(), [
+			self::HEAD_URL => self::gitilesJson( self::HEAD_RESPONSE ),
+			self::LOG_URL => self::logOf(),
+		] );
+
+		$this->assertNull( $result->downloadUrl );
+	}
+
+	public function testNoDownloadForOtherGerritProjects() {
+		$base = 'https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/EchoFork/';
+		$source = new GerritSource( $this->newHttpRequestFactory( [
+			$base . '+/refs/heads/REL1_43?format=JSON' => self::gitilesJson( self::HEAD_RESPONSE ),
+			$base . '+log/' . self::LOCAL_COMMIT . '..REL1_43?format=JSON&name-status=1&n=10000'
+				=> self::logOf( 'Reedy' ),
+			$base . '+/refs/heads/REL1_43/extension.json?format=TEXT' => [ 'code' => 404 ],
+		] ), [] );
+
+		$results = $source->check( [ [
+			self::gitCheckout(),
+			new Repository( Repository::GERRIT, 'mediawiki/extensions/EchoFork', 'REL1_43' ),
+		] ] );
+
+		$this->assertSame( CheckResult::OUTDATED, $results[0]->status );
+		$this->assertNull( $results[0]->downloadUrl, 'ExtensionDistributor only knows the extension by its own name' );
+	}
+
+	public function testSkinDownloadFromSkinDistributor() {
+		$base = 'https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/skins/Vector/+/refs/heads/REL1_43';
+		$source = new GerritSource( $this->newHttpRequestFactory( [
+			"$base?format=JSON" => self::gitilesJson( self::HEAD_RESPONSE ),
+			"$base/skin.json?format=TEXT" => [ 'body' => base64_encode( json_encode( [ 'version' => '1.1.0' ] ) ) ],
+		] ), [] );
+
+		$results = $source->check( [ [
+			new Component( Component::SKIN, 'Vector', '1.0.0' ),
+			new Repository( Repository::GERRIT, 'mediawiki/skins/Vector', 'REL1_43' ),
+		] ] );
+
+		$this->assertSame(
+			'https://www.mediawiki.org/wiki/Special:SkinDistributor/Vector',
+			$results[0]->downloadUrl
+		);
+	}
 }
