@@ -70,16 +70,18 @@ class GitHubSource extends GitSource {
 			throw $this->unexpectedResponse( $response );
 		}
 		$data = $this->decodeJson( $response );
-		// "ahead_by" counts all commits, but the list is capped at 250 entries.
+		// "ahead_by" counts all commits, but the list is capped at 250 entries, oldest first.
 		return [
 			'total' => (int)( $data['ahead_by'] ?? 0 ),
 			// The comparison lists the files of all commits together, not per commit.
 			'commits' => array_map(
 				static fn ( array $entry ) => [
+					'sha' => $entry['sha'],
+					'subject' => explode( "\n", $entry['commit']['message'] ?? '', 2 )[0],
 					'author' => $entry['commit']['author']['name'] ?? '',
 					'files' => null,
 				],
-				$data['commits'] ?? []
+				array_reverse( $data['commits'] ?? [] )
 			),
 		];
 	}

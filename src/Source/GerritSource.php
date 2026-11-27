@@ -108,6 +108,8 @@ class GerritSource extends GitSource {
 			'total' => count( $log ),
 			'commits' => array_map(
 				static fn ( array $entry ) => [
+					'sha' => $entry['commit'],
+					'subject' => explode( "\n", $entry['message'] ?? '', 2 )[0],
 					'author' => $entry['author']['name'] ?? '',
 					'files' => array_map(
 						// Deleted files have /dev/null as their new path.

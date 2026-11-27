@@ -32,4 +32,19 @@ class Repository {
 		}
 		return "https://gerrit.wikimedia.org/r/plugins/gitiles/{$this->path}/+/refs/heads/{$this->branch}";
 	}
+
+	public function getCommitUrl( string $sha ): string {
+		return $this->host === self::GITHUB
+			? "https://github.com/{$this->path}/commit/$sha"
+			: "https://gerrit.wikimedia.org/r/plugins/gitiles/{$this->path}/+/$sha";
+	}
+
+	/**
+	 * Where to see every commit on the branch that $sha does not have.
+	 */
+	public function getChangesUrl( string $sha ): string {
+		return $this->host === self::GITHUB
+			? "https://github.com/{$this->path}/compare/$sha...{$this->branch}"
+			: "https://gerrit.wikimedia.org/r/plugins/gitiles/{$this->path}/+log/$sha..{$this->branch}";
+	}
 }

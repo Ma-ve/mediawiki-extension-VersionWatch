@@ -28,6 +28,8 @@
 	"versionwatch-status-unknown": "Unknown",
 	"versionwatch-status-skipped": "Skipped",
 	"versionwatch-bundled-with": "bundled with MediaWiki $1",
+	"versionwatch-changes-show": "Show changes",
+	"versionwatch-changes-all": "See all changes",
 	"versionwatch-repository-change": "change",
 	"versionwatch-repository-not-checked": "Not checked",
 	"versionwatch-repository-invalid": "Invalid setting",

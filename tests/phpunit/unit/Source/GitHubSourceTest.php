@@ -51,8 +51,20 @@ class GitHubSourceTest extends MediaWikiUnitTestCase {
 			self::COMPARE_URL => self::json( [
 				'ahead_by' => 300,
 				'commits' => [
-					[ 'commit' => [ 'author' => [ 'name' => 'Translation updater bot' ] ] ],
-					[ 'commit' => [ 'author' => [ 'name' => 'Translation updater bot' ] ] ],
+					[
+						'sha' => sha1( 'first' ),
+						'commit' => [
+							'message' => 'Localisation updates',
+							'author' => [ 'name' => 'Translation updater bot' ],
+						],
+					],
+					[
+						'sha' => sha1( 'second' ),
+						'commit' => [
+							'message' => 'Localisation updates',
+							'author' => [ 'name' => 'Translation updater bot' ],
+						],
+					],
 				],
 			] ),
 		] );

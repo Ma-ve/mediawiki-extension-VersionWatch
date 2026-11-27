@@ -55,17 +55,19 @@ class GerritSourceTest extends MediaWikiUnitTestCase {
 	}
 
 	/**
-	 * @param array ...$commits Pairs of author and changed files
+	 * @param array ...$commits Author, changed files and, optionally, the commit message
 	 */
 	private static function logWithFiles( array ...$commits ): array {
 		return self::gitilesJson( [
-			'log' => array_map( static fn ( array $commit ) => [
+			'log' => array_map( static fn ( array $commit, int $i ) => [
+				'commit' => sha1( "commit $i" ),
+				'message' => $commit[2] ?? "Change $i\n\nChange-Id: I$i",
 				'author' => [ 'name' => $commit[0] ],
 				'tree_diff' => array_map(
 					static fn ( $path ) => [ 'old_path' => $path, 'new_path' => $path ],
 					$commit[1]
 				),
-			], $commits ),
+			], $commits, array_keys( $commits ) ),
 		] );
 	}
 
@@ -116,6 +118,8 @@ class GerritSourceTest extends MediaWikiUnitTestCase {
 
 	public function testDeletedFileUsesItsOldPath() {
 		$log = self::gitilesJson( [ 'log' => [ [
+			'commit' => sha1( 'deletion' ),
+			'message' => 'Remove unused class',
 			'author' => [ 'name' => 'Reedy' ],
 			'tree_diff' => [ [ 'old_path' => 'src/Unused.php', 'new_path' => '/dev/null' ] ],
 		] ] ] );

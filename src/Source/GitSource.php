@@ -19,6 +19,9 @@ abstract class GitSource {
 	/** Be polite to the hosting service: there can be dozens of extensions. */
 	private const MAX_CONNECTIONS_PER_HOST = 4;
 
+	/** Changes kept per extension for the report; the rest are a link away. */
+	private const MAX_LISTED_CHANGES = 50;
+
 	/**
 	 * @param HttpRequestFactory $httpRequestFactory
 	 * @param string[] $ignoredAuthors Authors whose commits do not make an extension outdated
@@ -50,9 +53,10 @@ abstract class GitSource {
 	 * @param Repository $repository
 	 * @param string $commit
 	 * @param array $response
-	 * @return array{total:int,commits:array<int,array{author:string,files:?string[]}>} Number of
-	 *  commits on the branch that are not in $commit, and those commits (possibly not all of
-	 *  them) with their author and, if the host lists them, the files they change
+	 * @return array{total:int,commits:array<int,array{sha:string,subject:string,author:string,files:?string[]}>}
+	 *  Number of commits on the branch that are not in $commit, and those commits (possibly
+	 *  not all of them), newest first, with their first message line, author and, if the
+	 *  host lists them, the files they change
 	 * @throws LookupFailure
 	 */
 	abstract protected function parseCompare( Repository $repository, string $commit, array $response ): array;
@@ -149,9 +153,17 @@ abstract class GitSource {
 		array $behind,
 		?string $upstreamVersion
 	): CheckResult {
-		$ignored = count( array_filter( $behind['commits'], [ $this, 'isIgnored' ] ) );
+		$counted = array_values( array_filter(
+			$behind['commits'],
+			fn ( array $commit ) => !$this->isIgnored( $commit )
+		) );
 		// Commits the host did not list are counted, since nothing is known about them.
-		$relevant = $behind['total'] - $ignored;
+		$relevant = $behind['total'] - ( count( $behind['commits'] ) - count( $counted ) );
+		$changes = array_map( static fn ( array $commit ) => [
+			'sha' => $commit['sha'],
+			'subject' => $commit['subject'],
+			'url' => $repository->getCommitUrl( $commit['sha'] ),
+		], array_slice( $counted, 0, self::MAX_LISTED_CHANGES ) );
 
 		if ( $relevant > 0 ) {
 			$status = CheckResult::OUTDATED;
@@ -174,7 +186,9 @@ abstract class GitSource {
 			latestDate: $head['date'],
 			note: $note,
 			noteParams: $params,
-			latestCommit: $head['sha']
+			latestCommit: $head['sha'],
+			changes: $changes,
+			changesUrl: $relevant > 0 ? $repository->getChangesUrl( (string)$component->commit ) : null
 		);
 	}
 

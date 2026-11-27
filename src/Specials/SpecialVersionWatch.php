@@ -157,7 +157,7 @@ class SpecialVersionWatch extends SpecialPage {
 					$result->latest, $result->latestCommit, $result->latestDate
 				) ) .
 				Html::rawElement( 'td', [], $this->formatStatus( $result->status ) ) .
-				Html::rawElement( 'td', [], $this->formatNote( $result ) );
+				Html::rawElement( 'td', [], $this->formatDetails( $result ) );
 			if ( $resolver ) {
 				$cells .= Html::rawElement( 'td', [], $this->formatRepository( $component, $resolver ) );
 			}
@@ -210,6 +210,45 @@ class SpecialVersionWatch extends SpecialPage {
 		return Html::element( 'span',
 			[ 'class' => [ 'ext-versionwatch-status', "ext-versionwatch-status-$status" ] ],
 			$this->msg( "versionwatch-status-$status" )->text()
+		);
+	}
+
+	/**
+	 * @return string HTML
+	 */
+	private function formatDetails( CheckResult $result ): string {
+		$html = $this->formatNote( $result );
+		if ( $result->changes ) {
+			$html .= $this->formatChanges( $result );
+		}
+		return $html;
+	}
+
+	/**
+	 * A collapsed list of the newer upstream changes, linked to the hosting service.
+	 *
+	 * @return string HTML
+	 */
+	private function formatChanges( CheckResult $result ): string {
+		$items = '';
+		foreach ( $result->changes as $change ) {
+			$items .= Html::rawElement( 'li', [],
+				Html::element( 'a',
+					[ 'href' => $change['url'], 'class' => 'external', 'rel' => 'nofollow' ],
+					substr( $change['sha'], 0, 7 )
+				) . ' ' . htmlspecialchars( $change['subject'] )
+			);
+		}
+		$all = $result->changesUrl === null ? '' : Html::rawElement( 'p', [],
+			Html::element( 'a',
+				[ 'href' => $result->changesUrl, 'class' => 'external', 'rel' => 'nofollow' ],
+				$this->msg( 'versionwatch-changes-all' )->text()
+			)
+		);
+		return Html::rawElement( 'details', [ 'class' => 'ext-versionwatch-changes' ],
+			Html::element( 'summary', [], $this->msg( 'versionwatch-changes-show' )->text() ) .
+			Html::rawElement( 'ul', [], $items ) .
+			$all
 		);
 	}
 

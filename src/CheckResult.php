@@ -31,6 +31,9 @@ class CheckResult {
 	 * @param string|null $note Message key explaining the status
 	 * @param array $noteParams Scalar parameters for $note
 	 * @param string|null $latestCommit Head of the branch an extension or skin is compared with
+	 * @param array<int,array{sha:string,subject:string,url:string}> $changes Newer upstream
+	 *  changes that count as updates, newest first; possibly not all of them
+	 * @param string|null $changesUrl Where to see all newer upstream changes
 	 */
 	public function __construct(
 		public readonly Component $component,
@@ -41,6 +44,8 @@ class CheckResult {
 		public readonly ?string $note = null,
 		public readonly array $noteParams = [],
 		public readonly ?string $latestCommit = null,
+		public readonly array $changes = [],
+		public readonly ?string $changesUrl = null,
 	) {
 	}
 
@@ -62,6 +67,8 @@ class CheckResult {
 			'note' => $this->note,
 			'noteParams' => $this->noteParams,
 			'latestCommit' => $this->latestCommit,
+			'changes' => $this->changes,
+			'changesUrl' => $this->changesUrl,
 		];
 	}
 
@@ -74,8 +81,10 @@ class CheckResult {
 			$data['eol'],
 			$data['note'],
 			$data['noteParams'],
-			// Not present in reports stored before this was added
+			// Not present in reports stored by earlier versions
 			$data['latestCommit'] ?? null,
+			$data['changes'] ?? [],
+			$data['changesUrl'] ?? null,
 		);
 	}
 }
