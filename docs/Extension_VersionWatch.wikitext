@@ -39,6 +39,7 @@ It is meant for wikis that are not run from a deployment pipeline, such as wikis
 
 == Installation ==
 {{ExtensionInstall
+|registration=required
 |download-link=[https://github.com/Ma-ve/mediawiki-extension-VersionWatch/releases Download]
 |custom-steps=* Schedule a daily check, for example with cron:
 *: <code>php maintenance/run.php VersionWatch:checkVersions --problems-only</code>
