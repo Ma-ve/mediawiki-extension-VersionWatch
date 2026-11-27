@@ -3,8 +3,14 @@
 A MediaWiki extension that tells you when the software behind your wiki needs updating:
 MediaWiki itself, PHP, the database server, and every installed extension and skin.
 
-Results are shown on `Special:VersionWatch` (sysops only) and printed by a maintenance
-script, which is meant to run from cron.
+- Security fixes are recognised and put at the top.
+- Each update lists the changes it brings, with a link to download it.
+- It warns when an update needs a newer PHP or MediaWiki than you have.
+- It checks whether your extensions and skins are ready for the newest MediaWiki release.
+- With Echo installed, sysops get a notification when something new needs attention.
+
+Results are shown on `Special:VersionWatch` (sysops only), printed by a maintenance script
+that is meant to run from cron, and available through the API.
 
 Requires MediaWiki 1.43 or later.
 
@@ -33,6 +39,22 @@ Sysops can also run a check at any time with the button on `Special:VersionWatch
 | Extensions and skins that came with the MediaWiki download | The commit your MediaWiki release pinned them to, compared with the release branch like a git checkout | *Update available* if the branch has commits you do not have |
 | Other extensions and skins without git information | The `version` in `extension.json` or `skin.json` on that branch | *Update available* if upstream has a higher version |
 
+### Security updates
+
+Wikimedia starts the commit message of every security fix with `SECURITY:`. When the newer
+changes of an extension include one, or a newer MediaWiki release on your branch does, the
+status is *Security update*, which is listed first. The details list the fixes.
+
+### What an update contains
+
+For extensions compared by commit, *Show changes* lists the changes that count, with links to
+each one and to the full history. Outdated rows link to a download: ExtensionDistributor or
+SkinDistributor on mediawiki.org for Wikimedia-hosted extensions and skins, a zip of the branch
+for GitHub, and the download page for MediaWiki itself.
+
+If the update needs a newer PHP or MediaWiki than the wiki has, according to the `requires` in
+its `extension.json` or `skin.json`, that is shown too.
+
 Modules that live inside another extension and are loaded as part of it, such as
 `ConfirmEdit/Turnstile`, have no repository of their own. They get the status of the
 extension they belong to.
@@ -55,6 +77,30 @@ it from git or ExtensionDistributor instead, so its own commit is used.
 
 The report is kept in the main object stash, so viewing the special page never waits on
 remote requests.
+
+## Upgrading MediaWiki
+
+When a newer MediaWiki release branch exists than the one you run, the report ends with whether
+you can upgrade to it:
+
+| Status | Meaning |
+|---|---|
+| *Ready* | The extension has a release branch for it, and its requirements are met |
+| *Included* | It comes with that MediaWiki download |
+| *Not available* | It has no release branch for it, so it is not maintained for that version |
+| *Incompatible* | Its version for that release needs a newer PHP or MediaWiki |
+
+It also says whether this server's PHP is supported by that release, and points out when the
+newer release is supported for a shorter time than yours, as when moving from a long-term
+support release.
+
+## Notifications
+
+With [Echo](https://www.mediawiki.org/wiki/Extension:Echo) installed, users with the
+`versionwatch` right get a notification when a check finds something that newly needs
+attention, or that became a security update. Something already reported is not reported again.
+Notifications are on the web and by email by default; users can change that in their
+preferences under *Software updates*. Without Echo, nothing changes.
 
 ## Where extensions are looked up
 
@@ -98,8 +144,21 @@ Commit authors whose commits do not make an extension outdated. Defaults to
 
 ## Rights
 
-`versionwatch` allows viewing `Special:VersionWatch` and running a check. It is granted to
-`sysop` by default.
+`versionwatch` allows viewing `Special:VersionWatch`, running a check and reading the report
+through the API. It is granted to `sysop` by default.
+
+## API
+
+`action=query&meta=versionwatch` returns the latest report. It does not run a check.
+
+```
+api.php?action=query&meta=versionwatch&vwprop=summary|components|upgrade&format=json
+```
+
+`summary` gives the number of components per status and how many need attention, which suits
+monitoring tools. To use it from a script, create a
+[bot password](https://www.mediawiki.org/wiki/Manual:Bot_passwords) with the *View the update
+status of installed software* grant.
 
 ## Development
 
@@ -114,6 +173,11 @@ Tests run from the core directory. The integration tests need an installed wiki:
 ```
 php vendor/bin/phpunit extensions/VersionWatch/tests/phpunit
 ```
+
+## Translating
+
+Messages are in `i18n/`, with documentation for translators in `i18n/qqq.json`. A test makes
+sure every message is documented.
 
 ## Releases
 
