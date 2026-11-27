@@ -327,9 +327,15 @@ class SpecialVersionWatch extends SpecialPage {
 			$label = $result->component->type === Component::CORE
 				? $this->msg( 'versionwatch-download-mediawiki', $result->latest )
 				: $this->msg( 'versionwatch-download' );
+			// A new tab keeps the report open while downloading the update.
 			$html .= Html::rawElement( 'p', [],
 				Html::element( 'a',
-					[ 'href' => $result->downloadUrl, 'class' => 'external', 'rel' => 'nofollow' ],
+					[
+						'href' => $result->downloadUrl,
+						'class' => 'external',
+						'rel' => 'nofollow noopener',
+						'target' => '_blank',
+					],
 					$label->text()
 				)
 			);
