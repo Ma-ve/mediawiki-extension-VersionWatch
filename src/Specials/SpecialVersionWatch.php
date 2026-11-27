@@ -388,7 +388,10 @@ class SpecialVersionWatch extends SpecialPage {
 		return true;
 	}
 
-	private function saveSettings( Component $component, Repository $default, array $data ): Status {
+	/**
+	 * @return Status|true
+	 */
+	private function saveSettings( Component $component, Repository $default, array $data ) {
 		$path = trim( $data['path'] ?? '' );
 		$branch = trim( $data['branch'] ?? '' );
 
@@ -414,10 +417,13 @@ class SpecialVersionWatch extends SpecialPage {
 				->inContentLanguage()
 				->text()
 		);
-		if ( $status->isOK() ) {
-			$this->checkRunner->run();
+		if ( !$status->isOK() ) {
+			return Status::wrap( $status );
 		}
-		return Status::wrap( $status );
+		// Saving an unchanged setting gives a "no change" warning, which the form would
+		// otherwise show as a failure.
+		$this->checkRunner->run();
+		return true;
 	}
 
 	/** @inheritDoc */
