@@ -12,6 +12,13 @@ MediaWiki itself, PHP, the database server, and every installed extension and sk
 Results are shown on `Special:VersionWatch` (sysops only), printed by a maintenance script
 that is meant to run from cron, and available through the API.
 
+![Special:VersionWatch with a MediaWiki security update and its fixes](docs/screenshots/overview.png)
+
+![The maintenance script reporting a security fix from cron](docs/screenshots/cron-output.png)
+
+More screenshots are in [`docs/screenshots`](docs/screenshots). They come from
+[an example page](docs/example/versionwatch-example.html) with sample data.
+
 Requires MediaWiki 1.43 or later.
 
 ## Installation
