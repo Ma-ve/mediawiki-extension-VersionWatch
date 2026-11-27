@@ -125,7 +125,8 @@ class GerritSource extends GitSource {
 
 	/**
 	 * ExtensionDistributor and SkinDistributor on mediawiki.org offer a download of every
-	 * Wikimedia-hosted extension and skin for each release branch.
+	 * Wikimedia-hosted extension and skin for each release branch. Passing the branch skips
+	 * the form and goes straight to the download.
 	 */
 	protected function getDownloadUrl( Component $component, Repository $repository ): ?string {
 		$special = match ( $repository->path ) {
@@ -133,9 +134,10 @@ class GerritSource extends GitSource {
 			"mediawiki/skins/{$component->name}" => 'SkinDistributor',
 			default => null,
 		};
-		return $special === null
-			? null
-			: "https://www.mediawiki.org/wiki/Special:$special/" . rawurlencode( $component->name );
+		return $special === null ? null : "https://www.mediawiki.org/wiki/Special:$special?" . http_build_query( [
+			'extdistname' => $component->name,
+			'extdistversion' => $repository->branch,
+		] );
 	}
 
 	protected function getHostName(): string {

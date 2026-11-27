@@ -319,7 +319,10 @@ class GerritSourceTest extends MediaWikiUnitTestCase {
 			self::LOG_URL => self::logOf( 'Umherirrender' ),
 		] );
 
-		$this->assertSame( 'https://www.mediawiki.org/wiki/Special:ExtensionDistributor/Echo', $result->downloadUrl );
+		$this->assertSame(
+			'https://www.mediawiki.org/wiki/Special:ExtensionDistributor?extdistname=Echo&extdistversion=REL1_43',
+			$result->downloadUrl
+		);
 	}
 
 	public function testNoDownloadWhenUpToDate() {
@@ -362,7 +365,7 @@ class GerritSourceTest extends MediaWikiUnitTestCase {
 		] ] );
 
 		$this->assertSame(
-			'https://www.mediawiki.org/wiki/Special:SkinDistributor/Vector',
+			'https://www.mediawiki.org/wiki/Special:SkinDistributor?extdistname=Vector&extdistversion=REL1_43',
 			$results[0]->downloadUrl
 		);
 	}
