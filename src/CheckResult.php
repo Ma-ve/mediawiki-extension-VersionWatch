@@ -7,6 +7,7 @@ namespace MediaWiki\Extension\VersionWatch;
  */
 class CheckResult {
 
+	public const SECURITY = 'security';
 	public const CURRENT = 'current';
 	public const OUTDATED = 'outdated';
 	public const UNSUPPORTED = 'unsupported';
@@ -15,6 +16,7 @@ class CheckResult {
 
 	/** Statuses ordered from most to least urgent. */
 	public const SEVERITY_ORDER = [
+		self::SECURITY,
 		self::UNSUPPORTED,
 		self::OUTDATED,
 		self::UNKNOWN,
@@ -31,8 +33,9 @@ class CheckResult {
 	 * @param string|null $note Message key explaining the status
 	 * @param array $noteParams Scalar parameters for $note
 	 * @param string|null $latestCommit Head of the branch an extension or skin is compared with
-	 * @param array<int,array{sha:string,subject:string,url:string}> $changes Newer upstream
-	 *  changes that count as updates, newest first; possibly not all of them
+	 * @param array<int,array{sha:string,subject:string,url:string,security:bool}> $changes Newer
+	 *  upstream changes that count as updates, security fixes first, then newest first;
+	 *  possibly not all of them
 	 * @param string|null $changesUrl Where to see all newer upstream changes
 	 */
 	public function __construct(
@@ -54,7 +57,7 @@ class CheckResult {
 	}
 
 	public function needsAttention(): bool {
-		return $this->status === self::OUTDATED || $this->status === self::UNSUPPORTED;
+		return in_array( $this->status, [ self::SECURITY, self::UNSUPPORTED, self::OUTDATED ], true );
 	}
 
 	public function toArray(): array {

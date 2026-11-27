@@ -61,6 +61,50 @@ class GerritSource extends GitSource {
 		return $commits;
 	}
 
+	/**
+	 * Security fixes in a MediaWiki release that a given earlier release does not have.
+	 *
+	 * @param string $installed Installed release, such as "1.43.12"
+	 * @param string $latest Newer release on the same branch, such as "1.43.13"
+	 * @return array<int,array{sha:string,subject:string,url:string,security:bool}>|null Null
+	 *  if either version has no release tag, such as a development version, or the lookup failed
+	 */
+	public function getCoreSecurityFixes( string $installed, string $latest ): ?array {
+		$range = "refs/tags/$installed..refs/tags/$latest";
+		$response = $this->httpRequestFactory->createMultiClient()->run(
+			$this->request( 'mediawiki/core', "+log/$range?format=JSON&n=" . self::LOG_LIMIT )
+		);
+		if ( $response['code'] !== 200 ) {
+			return null;
+		}
+		try {
+			$log = $this->decodeJson( $response )['log'] ?? [];
+		} catch ( LookupFailure ) {
+			return null;
+		}
+
+		$fixes = [];
+		foreach ( $log as $entry ) {
+			$subject = explode( "\n", $entry['message'] ?? '', 2 )[0];
+			if ( SecurityFixes::isSecurityFix( $subject ) ) {
+				$fixes[] = [
+					'sha' => $entry['commit'],
+					'subject' => $subject,
+					'url' => self::BASE_URL . "mediawiki/core/+/{$entry['commit']}",
+					'security' => true,
+				];
+			}
+		}
+		return $fixes;
+	}
+
+	/**
+	 * Where to see every change in MediaWiki between two releases.
+	 */
+	public static function getCoreChangesUrl( string $installed, string $latest ): string {
+		return self::BASE_URL . "mediawiki/core/+log/refs/tags/$installed..refs/tags/$latest";
+	}
+
 	protected function getHostName(): string {
 		return self::HOST;
 	}

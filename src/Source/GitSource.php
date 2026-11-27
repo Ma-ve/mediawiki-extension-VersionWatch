@@ -163,9 +163,18 @@ abstract class GitSource {
 			'sha' => $commit['sha'],
 			'subject' => $commit['subject'],
 			'url' => $repository->getCommitUrl( $commit['sha'] ),
-		], array_slice( $counted, 0, self::MAX_LISTED_CHANGES ) );
+			'security' => SecurityFixes::isSecurityFix( $commit['subject'] ),
+		], $counted );
+		// Stable sort, so both groups stay newest first.
+		usort( $changes, static fn ( array $a, array $b ) => $b['security'] <=> $a['security'] );
+		$securityFixes = count( array_filter( array_column( $changes, 'security' ) ) );
+		$changes = array_slice( $changes, 0, self::MAX_LISTED_CHANGES );
 
-		if ( $relevant > 0 ) {
+		if ( $securityFixes > 0 ) {
+			$status = CheckResult::SECURITY;
+			$note = 'versionwatch-note-security-changes';
+			$params = [ $relevant, $repository->branch, $securityFixes ];
+		} elseif ( $relevant > 0 ) {
 			$status = CheckResult::OUTDATED;
 			$note = 'versionwatch-note-commits-behind';
 			$params = [ $relevant, $repository->branch ];

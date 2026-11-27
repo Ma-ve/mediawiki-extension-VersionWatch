@@ -47,6 +47,23 @@ class CheckVersions extends Maintenance {
 			$results = array_filter( $results, static fn ( CheckResult $r ) => $r->needsAttention() );
 		}
 		$this->printTable( $results );
+		$this->printSecurityFixes( $results );
+	}
+
+	/**
+	 * @param CheckResult[] $results
+	 */
+	private function printSecurityFixes( array $results ): void {
+		foreach ( $results as $result ) {
+			$fixes = array_filter( $result->changes, static fn ( array $change ) => $change['security'] ?? false );
+			if ( !$fixes ) {
+				continue;
+			}
+			$this->output( "\nSecurity fixes for {$result->component->name}:\n" );
+			foreach ( $fixes as $fix ) {
+				$this->output( "  {$fix['subject']}\n    {$fix['url']}\n" );
+			}
+		}
 	}
 
 	/**

@@ -62,7 +62,7 @@ class VersionChecker {
 		}
 
 		$results = array_merge(
-			$this->releaseCycleSource->check( $platform ),
+			array_map( [ $this, 'withCoreSecurityFixes' ], $this->releaseCycleSource->check( $platform ) ),
 			$this->gerritSource->check( $gerritTargets ),
 			$this->gitHubSource->check( $gitHubTargets ),
 			$notChecked
@@ -70,6 +70,37 @@ class VersionChecker {
 		return new Report(
 			ConvertibleTimestamp::now( TS_MW ),
 			array_merge( $results, $this->followParents( $modules, $results ) )
+		);
+	}
+
+	/**
+	 * A newer MediaWiki release on the installed branch may include security fixes. Those
+	 * make updating urgent, so look them up and raise the status.
+	 */
+	private function withCoreSecurityFixes( CheckResult $result ): CheckResult {
+		$installed = $result->component->version;
+		if ( $result->component->type !== Component::CORE
+			|| $result->status !== CheckResult::OUTDATED
+			|| $installed === null
+			|| $result->latest === null
+		) {
+			return $result;
+		}
+
+		$fixes = $this->gerritSource->getCoreSecurityFixes( $installed, $result->latest );
+		if ( !$fixes ) {
+			return $result;
+		}
+		return new CheckResult(
+			component: $result->component,
+			status: CheckResult::SECURITY,
+			latest: $result->latest,
+			latestDate: $result->latestDate,
+			eol: $result->eol,
+			note: 'versionwatch-note-core-security',
+			noteParams: [ $result->latest, count( $fixes ) ],
+			changes: $fixes,
+			changesUrl: GerritSource::getCoreChangesUrl( $installed, $result->latest )
 		);
 	}
 

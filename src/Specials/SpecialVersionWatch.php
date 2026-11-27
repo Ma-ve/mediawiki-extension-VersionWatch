@@ -104,11 +104,17 @@ class SpecialVersionWatch extends SpecialPage {
 
 		$results = $report->getSortedResults();
 		$attention = count( array_filter( $results, static fn ( CheckResult $r ) => $r->needsAttention() ) );
-		$out->addHTML( Html::rawElement( 'p', [],
-			$this->msg( $attention ? 'versionwatch-attention' : 'versionwatch-attention-none' )
-				->numParams( $attention )
-				->parse()
+		$security = count( array_filter(
+			$results,
+			static fn ( CheckResult $r ) => $r->status === CheckResult::SECURITY
 		) );
+		if ( $security ) {
+			$summary = $this->msg( 'versionwatch-attention-security' )->numParams( $attention, $security );
+		} else {
+			$summary = $this->msg( $attention ? 'versionwatch-attention' : 'versionwatch-attention-none' )
+				->numParams( $attention );
+		}
+		$out->addHTML( Html::rawElement( 'p', [], $summary->parse() ) );
 
 		$resolver = $this->repositorySettings->getResolver();
 		foreach ( self::SECTIONS as $heading => $types ) {
@@ -202,11 +208,12 @@ class SpecialVersionWatch extends SpecialPage {
 	}
 
 	private function formatStatus( string $status ): string {
-		// Messages used: versionwatch-status-current, versionwatch-status-outdated,
-		// versionwatch-status-unsupported, versionwatch-status-unknown, versionwatch-status-skipped
-		// Classes used: ext-versionwatch-status-current, ext-versionwatch-status-outdated,
-		// ext-versionwatch-status-unsupported, ext-versionwatch-status-unknown,
-		// ext-versionwatch-status-skipped
+		// Messages used: versionwatch-status-security, versionwatch-status-current,
+		// versionwatch-status-outdated, versionwatch-status-unsupported,
+		// versionwatch-status-unknown, versionwatch-status-skipped
+		// Classes used: ext-versionwatch-status-security, ext-versionwatch-status-current,
+		// ext-versionwatch-status-outdated, ext-versionwatch-status-unsupported,
+		// ext-versionwatch-status-unknown, ext-versionwatch-status-skipped
 		return Html::element( 'span',
 			[ 'class' => [ 'ext-versionwatch-status', "ext-versionwatch-status-$status" ] ],
 			$this->msg( "versionwatch-status-$status" )->text()
