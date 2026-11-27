@@ -212,13 +212,18 @@ abstract class GitSource {
 		$securityFixes = count( array_filter( array_column( $changes, 'security' ) ) );
 		$changes = array_slice( $changes, 0, self::MAX_LISTED_CHANGES );
 
+		// "HEAD" means nothing to a reader, so the default branch gets its own wording.
+		$default = $repository->isDefaultBranch() ? '-default' : '';
 		if ( $securityFixes > 0 ) {
 			$status = CheckResult::SECURITY;
-			$note = 'versionwatch-note-security-changes';
+			// Messages used: versionwatch-note-security-changes,
+			// versionwatch-note-security-changes-default
+			$note = "versionwatch-note-security-changes$default";
 			$params = [ $relevant, $repository->branch, $securityFixes ];
 		} elseif ( $relevant > 0 ) {
 			$status = CheckResult::OUTDATED;
-			$note = 'versionwatch-note-commits-behind';
+			// Messages used: versionwatch-note-commits-behind, versionwatch-note-commits-behind-default
+			$note = "versionwatch-note-commits-behind$default";
 			$params = [ $relevant, $repository->branch ];
 		} elseif ( $behind['total'] > 0 ) {
 			$status = CheckResult::CURRENT;

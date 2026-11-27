@@ -125,7 +125,12 @@ class UpgradeChecker {
 			return new UpgradeResult( $component, UpgradeResult::INCOMPATIBLE, null, [], $unmet );
 		}
 		return new UpgradeResult(
-			$component, UpgradeResult::READY, 'versionwatch-upgrade-note-ready', [ $repository->branch ]
+			$component,
+			UpgradeResult::READY,
+			$repository->isDefaultBranch()
+				? 'versionwatch-upgrade-note-ready-default'
+				: 'versionwatch-upgrade-note-ready',
+			[ $repository->branch ]
 		);
 	}
 

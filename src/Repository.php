@@ -24,6 +24,13 @@ class Repository {
 	}
 
 	/**
+	 * Whether this follows the repository's default branch rather than a named one.
+	 */
+	public function isDefaultBranch(): bool {
+		return $this->branch === 'HEAD';
+	}
+
+	/**
 	 * Where to browse the branch in a web browser.
 	 */
 	public function getWebUrl(): string {
