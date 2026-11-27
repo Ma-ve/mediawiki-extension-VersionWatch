@@ -168,14 +168,13 @@ abstract class GitSource {
 		}
 
 		return new CheckResult(
-			$component,
-			$status,
-			$upstreamVersion,
-			$head['date'],
-			null,
-			$note,
-			$params,
-			$head['sha']
+			component: $component,
+			status: $status,
+			latest: $upstreamVersion,
+			latestDate: $head['date'],
+			note: $note,
+			noteParams: $params,
+			latestCommit: $head['sha']
 		);
 	}
 
@@ -198,7 +197,13 @@ abstract class GitSource {
 		$status = version_compare( (string)$component->version, $latest, '<' )
 			? CheckResult::OUTDATED
 			: CheckResult::CURRENT;
-		return new CheckResult( $component, $status, $latest, $head['date'], null, null, [], $head['sha'] );
+		return new CheckResult(
+			component: $component,
+			status: $status,
+			latest: $latest,
+			latestDate: $head['date'],
+			latestCommit: $head['sha']
+		);
 	}
 
 	/**

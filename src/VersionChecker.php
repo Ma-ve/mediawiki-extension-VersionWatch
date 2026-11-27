@@ -90,14 +90,13 @@ class VersionChecker {
 		return array_map( static function ( Component $module ) use ( $byName ) {
 			$parent = $byName[$module->type][$module->partOf] ?? null;
 			return new CheckResult(
-				$module,
-				$parent?->status ?? CheckResult::UNKNOWN,
-				$parent?->latest,
-				$parent?->latestDate,
-				null,
-				'versionwatch-note-part-of',
-				[ $module->partOf ],
-				$parent?->latestCommit
+				component: $module,
+				status: $parent?->status ?? CheckResult::UNKNOWN,
+				latest: $parent?->latest,
+				latestDate: $parent?->latestDate,
+				note: 'versionwatch-note-part-of',
+				noteParams: [ $module->partOf ],
+				latestCommit: $parent?->latestCommit
 			);
 		}, $modules );
 	}

@@ -45,7 +45,7 @@ class CheckResult {
 	}
 
 	public static function unknown( Component $component, string $note, array $noteParams = [] ): self {
-		return new self( $component, self::UNKNOWN, null, null, null, $note, $noteParams );
+		return new self( component: $component, status: self::UNKNOWN, note: $note, noteParams: $noteParams );
 	}
 
 	public function needsAttention(): bool {

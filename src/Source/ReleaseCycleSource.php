@@ -107,13 +107,13 @@ class ReleaseCycleSource {
 		}
 
 		return new CheckResult(
-			$component,
-			$status,
-			$latest,
-			$latestDate ?: null,
-			$eolDate,
-			$note,
-			$eolDate !== null ? [ $eolDate ] : []
+			component: $component,
+			status: $status,
+			latest: $latest,
+			latestDate: $latestDate ?: null,
+			eol: $eolDate,
+			note: $note,
+			noteParams: $eolDate !== null ? [ $eolDate ] : []
 		);
 	}
 
