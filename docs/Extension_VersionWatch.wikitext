@@ -12,8 +12,8 @@
 |mediawiki       = 1.43+
 |php             = 8.1+
 |license         = GPL-2.0-or-later
-|download        = [https://github.com/Ma-ve/MedaWiki-Extension-VersionWatch/releases GitHub releases]
-|readme          = [https://github.com/Ma-ve/MedaWiki-Extension-VersionWatch#readme README]
+|download        = [https://github.com/Ma-ve/mediawiki-extension-VersionWatch/releases GitHub releases]
+|readme          = [https://github.com/Ma-ve/mediawiki-extension-VersionWatch#readme README]
 |parameters      =
 $wgVersionWatchGitHubToken<br>
 $wgVersionWatchIgnoredAuthors
@@ -39,7 +39,7 @@ It is meant for wikis that are not run from a deployment pipeline, such as wikis
 
 == Installation ==
 {{ExtensionInstall
-|download-link=[https://github.com/Ma-ve/MedaWiki-Extension-VersionWatch/releases Download]
+|download-link=[https://github.com/Ma-ve/mediawiki-extension-VersionWatch/releases Download]
 |custom-steps=* Schedule a daily check, for example with cron:
 *: <code>php maintenance/run.php VersionWatch:checkVersions --problems-only</code>
 *: With <code>--problems-only</code> the script prints nothing while everything is up to date, so cron only sends mail when something needs attention.
