@@ -16,10 +16,12 @@ use MediaWiki\Extension\VersionWatch\Upgrade\UpgradeReport;
 use MediaWiki\Extension\VersionWatch\Upgrade\UpgradeResult;
 use MediaWiki\Html\Html;
 use MediaWiki\HTMLForm\HTMLForm;
+use MediaWiki\MediaWikiServices;
 use MediaWiki\Message\Message;
 use MediaWiki\Permissions\PermissionStatus;
 use MediaWiki\SpecialPage\SpecialPage;
 use MediaWiki\Status\Status;
+use MediaWiki\User\User;
 use PermissionsError;
 use Wikimedia\Timestamp\ConvertibleTimestamp;
 
@@ -54,7 +56,37 @@ class SpecialVersionWatch extends SpecialPage {
 		private readonly InstalledComponents $installedComponents,
 		private readonly RepositorySettings $repositorySettings,
 	) {
-		parent::__construct( 'VersionWatch', 'versionwatch' );
+		parent::__construct( 'VersionWatch' );
+	}
+
+	/**
+	 * The right needed to use this page. MediaWiki 1.46 deprecated passing it to the
+	 * constructor in favour of overriding this method.
+	 */
+	public function getRestriction(): string {
+		return 'versionwatch';
+	}
+
+	/**
+	 * Before MediaWiki 1.46, these three methods read the right from a property that only the
+	 * constructor sets. Overriding them keeps the page restricted on those versions too.
+	 *
+	 * @inheritDoc
+	 */
+	public function isRestricted() {
+		return !MediaWikiServices::getInstance()->getGroupPermissionsLookup()
+			->groupHasPermission( '*', $this->getRestriction() );
+	}
+
+	/** @inheritDoc */
+	public function userCanExecute( User $user ) {
+		return MediaWikiServices::getInstance()->getPermissionManager()
+			->userHasRight( $user, $this->getRestriction() );
+	}
+
+	/** @inheritDoc */
+	protected function displayRestrictionError() {
+		throw new PermissionsError( $this->getRestriction() );
 	}
 
 	/** @inheritDoc */
