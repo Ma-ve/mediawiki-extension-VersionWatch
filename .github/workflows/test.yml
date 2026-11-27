@@ -1,0 +1,114 @@
+name: Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  phpunit:
+    name: PHPUnit (MediaWiki ${{ matrix.mediawiki }}, PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The oldest supported release, on its oldest PHP
+          - mediawiki: REL1_43
+            php: '8.1'
+          # The newest release, to catch what MediaWiki has changed since
+          - mediawiki: REL1_46
+            php: '8.3'
+    steps:
+      - name: Check out MediaWiki
+        uses: actions/checkout@v4
+        with:
+          repository: wikimedia/mediawiki
+          ref: ${{ matrix.mediawiki }}
+          path: mediawiki
+
+      # Echo is optional, but installed so the notification code is tested too.
+      - name: Check out Echo
+        uses: actions/checkout@v4
+        with:
+          repository: wikimedia/mediawiki-extensions-Echo
+          ref: ${{ matrix.mediawiki }}
+          path: mediawiki/extensions/Echo
+
+      - name: Check out VersionWatch
+        uses: actions/checkout@v4
+        with:
+          path: mediawiki/extensions/VersionWatch
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: intl, pdo_sqlite
+          tools: composer
+          coverage: none
+
+      - name: Install dependencies
+        working-directory: mediawiki
+        run: composer install --no-progress --no-interaction
+
+      - name: Install MediaWiki
+        working-directory: mediawiki
+        run: |
+          php maintenance/run.php install --dbtype=sqlite --dbpath="$PWD/data" \
+            --server=http://localhost --scriptpath= --pass=AdminPassword123! TestWiki Admin
+          echo "wfLoadExtension( 'Echo' );" >> LocalSettings.php
+          echo "wfLoadExtension( 'VersionWatch' );" >> LocalSettings.php
+          php maintenance/run.php update --quick
+
+      - name: Run tests
+        working-directory: mediawiki
+        run: |
+          # Since MediaWiki 1.44 the PHPUnit configuration is generated instead of shipped.
+          if [ ! -f phpunit.xml.dist ]; then
+            composer phpunit:config
+          fi
+          php vendor/bin/phpunit extensions/VersionWatch/tests/phpunit
+
+  phan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out MediaWiki
+        uses: actions/checkout@v4
+        with:
+          repository: wikimedia/mediawiki
+          ref: REL1_43
+          path: mediawiki
+
+      - name: Check out Echo
+        uses: actions/checkout@v4
+        with:
+          repository: wikimedia/mediawiki-extensions-Echo
+          ref: REL1_43
+          path: mediawiki/extensions/Echo
+
+      - name: Check out VersionWatch
+        uses: actions/checkout@v4
+        with:
+          path: mediawiki/extensions/VersionWatch
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: ast
+          tools: composer
+          coverage: none
+
+      - name: Install dependencies
+        run: |
+          composer install --no-progress --no-interaction --working-dir=mediawiki
+          composer install --no-progress --no-interaction --working-dir=mediawiki/extensions/VersionWatch
+
+      - name: Run phan
+        working-directory: mediawiki/extensions/VersionWatch
+        env:
+          MW_INSTALL_PATH: ${{ github.workspace }}/mediawiki
+        run: composer phan
