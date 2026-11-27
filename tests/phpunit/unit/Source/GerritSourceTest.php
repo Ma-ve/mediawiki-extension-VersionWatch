@@ -7,6 +7,7 @@ use MediaWiki\Extension\VersionWatch\Component;
 use MediaWiki\Extension\VersionWatch\Repository;
 use MediaWiki\Extension\VersionWatch\Requirements;
 use MediaWiki\Extension\VersionWatch\Source\GerritSource;
+use MediaWiki\Extension\VersionWatch\Source\LookupFailure;
 use MediaWiki\Extension\VersionWatch\Tests\MockHttpTrait;
 use MediaWikiUnitTestCase;
 
@@ -388,5 +389,33 @@ class GerritSourceTest extends MediaWikiUnitTestCase {
 			[ [ 'name' => 'MediaWiki', 'constraint' => '>= 1.45', 'installed' => '1.43.12' ] ],
 			$results[0]->unmetRequirements
 		);
+	}
+
+	public function testManifestsOfOtherBranches() {
+		$base = 'https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/';
+		$source = new GerritSource( $this->newHttpRequestFactory( [
+			$base . 'Echo/+/refs/heads/REL1_46/extension.json?format=TEXT'
+				=> [ 'body' => base64_encode( json_encode( [ 'name' => 'Echo' ] ) ) ],
+			$base . 'Tabber/+/refs/heads/REL1_46/extension.json?format=TEXT' => [ 'code' => 404 ],
+			$base . 'Broken/+/refs/heads/REL1_46/extension.json?format=TEXT' => [ 'code' => 500 ],
+		] ), [] );
+
+		$manifests = $source->getManifests( array_map( static fn ( $name ) => [
+			new Component( Component::EXTENSION, $name ),
+			new Repository( Repository::GERRIT, "mediawiki/extensions/$name", 'REL1_46' ),
+		], [ 'Echo', 'Tabber', 'Broken' ] ) );
+
+		$this->assertSame( [ 'name' => 'Echo' ], $manifests[0] );
+		$this->assertNull( $manifests[1], 'A missing branch or file is null' );
+		$this->assertInstanceOf( LookupFailure::class, $manifests[2] );
+	}
+
+	public function testCorePhpRequirement() {
+		$source = new GerritSource( $this->newHttpRequestFactory( [
+			'https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/core/+/refs/tags/1.46.3/composer.json?format=TEXT'
+				=> [ 'body' => base64_encode( json_encode( [ 'require' => [ 'php' => '>=8.3.0' ] ] ) ) ],
+		] ), [] );
+
+		$this->assertSame( '>=8.3.0', $source->getCorePhpRequirement( '1.46.3' ) );
 	}
 }

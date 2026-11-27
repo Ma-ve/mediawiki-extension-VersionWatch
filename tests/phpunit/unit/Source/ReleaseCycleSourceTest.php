@@ -154,4 +154,35 @@ class ReleaseCycleSourceTest extends MediaWikiUnitTestCase {
 		$this->assertSame( 'versionwatch-note-request-failed', $result->note );
 		$this->assertSame( [ 'endoflife.date', 'Connection timed out' ], $result->noteParams );
 	}
+
+	public function testNewestMediaWikiRelease() {
+		$source = new ReleaseCycleSource( $this->newHttpRequestFactory( [
+			'https://endoflife.date/api/mediawiki.json' => [ 'body' => json_encode( [
+				[ 'cycle' => '1.47', 'releaseDate' => '2026-12-15', 'eol' => '2028-01-01', 'latest' => '1.47.0' ],
+				[ 'cycle' => '1.46', 'releaseDate' => '2026-06-30', 'eol' => '2027-07-31', 'latest' => '1.46.3' ],
+				[
+					'cycle' => '1.43',
+					'releaseDate' => '2024-12-21',
+					'eol' => '2027-12-31',
+					'latest' => '1.43.12',
+					'lts' => true,
+				],
+				[ 'cycle' => '1.42', 'releaseDate' => '2024-06-27', 'eol' => '2025-06-30', 'latest' => '1.42.7' ],
+			] ) ],
+		] ) );
+
+		$this->assertSame(
+			[ 'cycle' => '1.46', 'latest' => '1.46.3', 'eol' => '2027-07-31', 'lts' => false ],
+			$source->getNewestMediaWikiRelease(),
+			'Announced but unreleased branches are not offered'
+		);
+	}
+
+	public function testReleaseDataIsDownloadedOnce() {
+		$source = new ReleaseCycleSource( $this->newHttpRequestFactory( $this->mediaWikiResponse() ) );
+		$source->check( [ new Component( Component::CORE, 'MediaWiki', '1.43.12' ) ] );
+		$source->getNewestMediaWikiRelease();
+
+		$this->assertCount( 1, $this->sentRequests );
+	}
 }
