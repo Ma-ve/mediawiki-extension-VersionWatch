@@ -37,6 +37,7 @@ class CheckResult {
 	 *  upstream changes that count as updates, security fixes first, then newest first;
 	 *  possibly not all of them
 	 * @param string|null $changesUrl Where to see all newer upstream changes
+	 * @param string|null $downloadUrl Where to get the update
 	 */
 	public function __construct(
 		public readonly Component $component,
@@ -49,6 +50,7 @@ class CheckResult {
 		public readonly ?string $latestCommit = null,
 		public readonly array $changes = [],
 		public readonly ?string $changesUrl = null,
+		public readonly ?string $downloadUrl = null,
 	) {
 	}
 
@@ -72,6 +74,7 @@ class CheckResult {
 			'latestCommit' => $this->latestCommit,
 			'changes' => $this->changes,
 			'changesUrl' => $this->changesUrl,
+			'downloadUrl' => $this->downloadUrl,
 		];
 	}
 
@@ -88,6 +91,7 @@ class CheckResult {
 			$data['latestCommit'] ?? null,
 			$data['changes'] ?? [],
 			$data['changesUrl'] ?? null,
+			$data['downloadUrl'] ?? null,
 		);
 	}
 }

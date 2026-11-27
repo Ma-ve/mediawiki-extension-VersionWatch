@@ -228,6 +228,17 @@ class SpecialVersionWatch extends SpecialPage {
 		if ( $result->changes ) {
 			$html .= $this->formatChanges( $result );
 		}
+		if ( $result->downloadUrl !== null && $result->needsAttention() ) {
+			$label = $result->component->type === Component::CORE
+				? $this->msg( 'versionwatch-download-mediawiki', $result->latest )
+				: $this->msg( 'versionwatch-download' );
+			$html .= Html::rawElement( 'p', [],
+				Html::element( 'a',
+					[ 'href' => $result->downloadUrl, 'class' => 'external', 'rel' => 'nofollow' ],
+					$label->text()
+				)
+			);
+		}
 		return $html;
 	}
 

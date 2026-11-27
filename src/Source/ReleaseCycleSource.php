@@ -15,6 +15,9 @@ class ReleaseCycleSource {
 
 	private const HOST = 'endoflife.date';
 
+	/** Only MediaWiki can be updated from here; PHP and the database are up to the server. */
+	private const MEDIAWIKI_DOWNLOAD_URL = 'https://www.mediawiki.org/wiki/Download';
+
 	/** Component names mapped to endoflife.date product identifiers. */
 	private const PRODUCTS = [
 		'MediaWiki' => 'mediawiki',
@@ -113,7 +116,10 @@ class ReleaseCycleSource {
 			latestDate: $latestDate ?: null,
 			eol: $eolDate,
 			note: $note,
-			noteParams: $eolDate !== null ? [ $eolDate ] : []
+			noteParams: $eolDate !== null ? [ $eolDate ] : [],
+			downloadUrl: $component->type === Component::CORE && $status === CheckResult::OUTDATED
+				? self::MEDIAWIKI_DOWNLOAD_URL
+				: null
 		);
 	}
 

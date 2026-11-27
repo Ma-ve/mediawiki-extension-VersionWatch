@@ -32,6 +32,8 @@
 	"versionwatch-bundled-with": "bundled with MediaWiki $1",
 	"versionwatch-changes-show": "Show changes",
 	"versionwatch-changes-all": "See all changes",
+	"versionwatch-download": "Download the update",
+	"versionwatch-download-mediawiki": "Download MediaWiki $1",
 	"versionwatch-repository-change": "change",
 	"versionwatch-repository-not-checked": "Not checked",
 	"versionwatch-repository-invalid": "Invalid setting",

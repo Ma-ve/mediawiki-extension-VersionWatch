@@ -37,6 +37,11 @@ abstract class GitSource {
 	 */
 	abstract protected function getHostName(): string;
 
+	/**
+	 * Where to download the code on the branch, if the host offers that.
+	 */
+	abstract protected function getDownloadUrl( Component $component, Repository $repository ): ?string;
+
 	abstract protected function headRequest( Repository $repository ): array;
 
 	/**
@@ -125,7 +130,7 @@ abstract class GitSource {
 			);
 		}
 		if ( $component->version !== null && $manifestResponse !== null ) {
-			return $this->evaluateVersion( $component, $head, $this->parseManifest( $manifestResponse ) );
+			return $this->evaluateVersion( $component, $repository, $head, $this->parseManifest( $manifestResponse ) );
 		}
 		throw new LookupFailure( 'versionwatch-note-no-version' );
 	}
@@ -197,7 +202,8 @@ abstract class GitSource {
 			noteParams: $params,
 			latestCommit: $head['sha'],
 			changes: $changes,
-			changesUrl: $relevant > 0 ? $repository->getChangesUrl( (string)$component->commit ) : null
+			changesUrl: $relevant > 0 ? $repository->getChangesUrl( (string)$component->commit ) : null,
+			downloadUrl: $relevant > 0 ? $this->getDownloadUrl( $component, $repository ) : null
 		);
 	}
 
@@ -212,7 +218,12 @@ abstract class GitSource {
 			|| ( $commit['files'] !== null && DevelopmentFiles::containsAll( $commit['files'] ) );
 	}
 
-	private function evaluateVersion( Component $component, array $head, array $manifest ): CheckResult {
+	private function evaluateVersion(
+		Component $component,
+		Repository $repository,
+		array $head,
+		array $manifest
+	): CheckResult {
 		$latest = $manifest['version'] ?? null;
 		if ( !is_string( $latest ) ) {
 			throw new LookupFailure( 'versionwatch-note-no-upstream-version' );
@@ -225,7 +236,8 @@ abstract class GitSource {
 			status: $status,
 			latest: $latest,
 			latestDate: $head['date'],
-			latestCommit: $head['sha']
+			latestCommit: $head['sha'],
+			downloadUrl: $status === CheckResult::OUTDATED ? $this->getDownloadUrl( $component, $repository ) : null
 		);
 	}
 

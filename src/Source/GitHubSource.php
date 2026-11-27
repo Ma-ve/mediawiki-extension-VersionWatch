@@ -2,6 +2,7 @@
 
 namespace MediaWiki\Extension\VersionWatch\Source;
 
+use MediaWiki\Extension\VersionWatch\Component;
 use MediaWiki\Extension\VersionWatch\Repository;
 use MediaWiki\Http\HttpRequestFactory;
 use Wikimedia\Timestamp\ConvertibleTimestamp;
@@ -25,6 +26,10 @@ class GitHubSource extends GitSource {
 		private readonly ?string $token,
 	) {
 		parent::__construct( $httpRequestFactory, $ignoredAuthors );
+	}
+
+	protected function getDownloadUrl( Component $component, Repository $repository ): ?string {
+		return "https://github.com/{$repository->path}/archive/" . rawurlencode( $repository->branch ) . '.zip';
 	}
 
 	protected function getHostName(): string {

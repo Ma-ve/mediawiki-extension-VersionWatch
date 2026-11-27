@@ -32,6 +32,8 @@
 	"versionwatch-bundled-with": "Shown in parentheses after the commit of an extension or skin that has no git information of its own, so the commit was taken from the MediaWiki release it came with.\n\nParameters:\n* $1 - MediaWiki version, such as 1.43.12",
 	"versionwatch-changes-show": "Label to expand the list of newer upstream changes (commits) of an extension or skin.",
 	"versionwatch-changes-all": "Link below the list of newer changes to the full list on the hosting service, such as Wikimedia Gerrit or GitHub.",
+	"versionwatch-download": "Link to download the newer version of an extension or skin, such as from ExtensionDistributor on mediawiki.org or as a zip file from GitHub.",
+	"versionwatch-download-mediawiki": "Link to the MediaWiki download page.\n\nParameters:\n* $1 - newest MediaWiki version on the installed branch, such as 1.43.13",
 	"versionwatch-repository-change": "Link text, shown in parentheses, to [[Special:VersionWatch]]/<name>, where the repository setting can be changed.\n{{Identical|Change}}",
 	"versionwatch-repository-not-checked": "Shown in the repository column for an extension or skin that is set not to be checked.",
 	"versionwatch-repository-invalid": "Shown in the repository column when the setting on [[MediaWiki:VersionWatch.json]] cannot be understood.",

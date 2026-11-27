@@ -105,6 +105,21 @@ class GerritSource extends GitSource {
 		return self::BASE_URL . "mediawiki/core/+log/refs/tags/$installed..refs/tags/$latest";
 	}
 
+	/**
+	 * ExtensionDistributor and SkinDistributor on mediawiki.org offer a download of every
+	 * Wikimedia-hosted extension and skin for each release branch.
+	 */
+	protected function getDownloadUrl( Component $component, Repository $repository ): ?string {
+		$special = match ( $repository->path ) {
+			"mediawiki/extensions/{$component->name}" => 'ExtensionDistributor',
+			"mediawiki/skins/{$component->name}" => 'SkinDistributor',
+			default => null,
+		};
+		return $special === null
+			? null
+			: "https://www.mediawiki.org/wiki/Special:$special/" . rawurlencode( $component->name );
+	}
+
 	protected function getHostName(): string {
 		return self::HOST;
 	}

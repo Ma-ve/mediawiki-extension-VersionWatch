@@ -100,7 +100,8 @@ class VersionChecker {
 			note: 'versionwatch-note-core-security',
 			noteParams: [ $result->latest, count( $fixes ) ],
 			changes: $fixes,
-			changesUrl: GerritSource::getCoreChangesUrl( $installed, $result->latest )
+			changesUrl: GerritSource::getCoreChangesUrl( $installed, $result->latest ),
+			downloadUrl: $result->downloadUrl
 		);
 	}
 
