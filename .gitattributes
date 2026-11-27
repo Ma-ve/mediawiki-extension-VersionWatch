@@ -4,5 +4,6 @@
 /.gitignore export-ignore
 /.phan export-ignore
 /.phpcs.xml export-ignore
+/docs export-ignore
 /composer.json export-ignore
 /tests export-ignore

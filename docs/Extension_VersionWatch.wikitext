@@ -1,0 +1,77 @@
+{{Extension
+|status          = beta
+|type1           = special
+|type2           = api
+|hook1           = BeforeCreateEchoEvent
+|username        = Mave
+|author          = Mave
+|description     = Tells administrators when MediaWiki, PHP, the database server, extensions or skins need updating, and flags security fixes
+|image           =
+|version         = 1.0.3
+|update          =
+|mediawiki       = 1.43+
+|php             = 8.1+
+|license         = GPL-2.0-or-later
+|download        = [https://github.com/Ma-ve/MedaWiki-Extension-VersionWatch/releases GitHub releases]
+|readme          = [https://github.com/Ma-ve/MedaWiki-Extension-VersionWatch#readme README]
+|parameters      =
+$wgVersionWatchGitHubToken<br>
+$wgVersionWatchIgnoredAuthors
+|rights          = versionwatch
+|api             = meta=versionwatch
+}}
+
+'''VersionWatch''' tells administrators when the software behind their wiki needs updating: MediaWiki itself, PHP, the database server, and every installed extension and skin.
+
+It is meant for wikis that are not run from a deployment pipeline, such as wikis on shared hosting, where nobody notices that an extension has a security fix waiting.
+
+== Features ==
+* '''[[Special:VersionWatch]]''' compares everything that is installed with its upstream releases and repositories.
+* '''Security fixes''' are recognised by the <code>SECURITY:</code> prefix Wikimedia uses in commit messages, both for extensions and for newer MediaWiki releases, and listed first.
+* Each update '''lists the changes''' it brings and links to a download: [[Special:ExtensionDistributor|ExtensionDistributor]] for Wikimedia-hosted extensions, a zip for GitHub-hosted ones.
+* Changes that do not affect a wiki, such as translation updates and changes to development tools, '''do not count''' as updates.
+* It '''warns''' when an update needs a newer PHP or MediaWiki than the wiki has.
+* It checks whether the installed extensions and skins are '''ready for the newest MediaWiki release'''.
+* Extensions bundled with MediaWiki are checked against the exact commit their release shipped.
+* With [[Extension:Echo|Echo]], users with the <code>versionwatch</code> right get a '''notification''' when something newly needs attention.
+* A maintenance script for cron, which only prints something when there is something to do.
+* An '''API module''' for monitoring tools.
+
+== Installation ==
+{{ExtensionInstall
+|download-link=[https://github.com/Ma-ve/MedaWiki-Extension-VersionWatch/releases Download]
+|custom-steps=* Schedule a daily check, for example with cron:
+*: <code>php maintenance/run.php VersionWatch:checkVersions --problems-only</code>
+*: With <code>--problems-only</code> the script prints nothing while everything is up to date, so cron only sends mail when something needs attention.
+}}
+
+== Usage ==
+Open [[Special:VersionWatch]] to see the latest report, or use ''Check now'' to run a new check. The page has a table for the platform (MediaWiki, PHP and the database server), one for extensions and one for skins, followed by whether the wiki is ready for the newest MediaWiki release.
+
+=== Where extensions are looked up ===
+Extensions and skins are looked up on Wikimedia Gerrit, on the release branch matching the installed MediaWiki, such as <code>REL1_43</code>. For an extension hosted on GitHub, maintained on another branch, or without an upstream, use the ''change'' link in the Repository column. Settings are kept as JSON on <code>MediaWiki:VersionWatch.json</code>, so changes have page history and can be reverted.
+
+== Configuration ==
+{| class="wikitable"
+! Setting !! Default !! Description
+|-
+| <code>$wgVersionWatchGitHubToken</code> || <code>null</code> || A GitHub token, to raise GitHub's limit of 60 requests per hour per IP address. A fine-grained token without any permissions is enough.
+|-
+| <code>$wgVersionWatchIgnoredAuthors</code> || <code>[ 'Translation updater bot' ]</code> || Authors whose commits do not count as updates.
+|}
+
+== User rights ==
+{| class="wikitable"
+! Right !! Default groups !! Description
+|-
+| <code>versionwatch</code> || sysop || View [[Special:VersionWatch]], run a check and read the report through the API.
+|}
+
+== API ==
+<code>action=query&meta=versionwatch&vwprop=summary|components|upgrade</code> returns the latest report. It does not run a check. To use it from a script, create a [[Manual:Bot passwords|bot password]] with the ''View the update status of installed software'' grant.
+
+== Privacy ==
+To check for updates, VersionWatch requests public data from gerrit.wikimedia.org, endoflife.date, api.github.com and raw.githubusercontent.com. Those requests contain the names of installed extensions and the commits they were installed from, but nothing about the wiki's users or content.
+
+[[Category:Extensions with an API]]
+[[Category:Version control extensions]]
