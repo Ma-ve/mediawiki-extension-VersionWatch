@@ -5,6 +5,7 @@ namespace MediaWiki\Extension\VersionWatch\Tests\Unit\Source;
 use MediaWiki\Extension\VersionWatch\CheckResult;
 use MediaWiki\Extension\VersionWatch\Component;
 use MediaWiki\Extension\VersionWatch\Repository;
+use MediaWiki\Extension\VersionWatch\Requirements;
 use MediaWiki\Extension\VersionWatch\Source\GerritSource;
 use MediaWiki\Extension\VersionWatch\Tests\MockHttpTrait;
 use MediaWikiUnitTestCase;
@@ -362,6 +363,30 @@ class GerritSourceTest extends MediaWikiUnitTestCase {
 		$this->assertSame(
 			'https://www.mediawiki.org/wiki/Special:SkinDistributor/Vector',
 			$results[0]->downloadUrl
+		);
+	}
+
+	public function testUpdateNeedingNewerMediaWiki() {
+		$source = new GerritSource(
+			$this->newHttpRequestFactory( [
+				self::HEAD_URL => self::gitilesJson( self::HEAD_RESPONSE ),
+				self::LOG_URL => self::logOf( 'Umherirrender' ),
+				self::MANIFEST_URL => [
+					'body' => base64_encode( json_encode( [ 'requires' => [ 'MediaWiki' => '>= 1.45' ] ] ) ),
+				],
+			] ),
+			[],
+			new Requirements( '1.43.12', '8.3.0' )
+		);
+
+		$results = $source->check( [ [
+			self::gitCheckout(),
+			new Repository( Repository::GERRIT, 'mediawiki/extensions/Echo', 'REL1_43' ),
+		] ] );
+
+		$this->assertSame(
+			[ [ 'name' => 'MediaWiki', 'constraint' => '>= 1.45', 'installed' => '1.43.12' ] ],
+			$results[0]->unmetRequirements
 		);
 	}
 }
