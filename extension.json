@@ -28,6 +28,17 @@
 	"ServiceWiringFiles": [
 		"src/ServiceWiring.php"
 	],
+	"HookHandlers": {
+		"EchoHooks": {
+			"class": "MediaWiki\\Extension\\VersionWatch\\Notifications\\EchoHooks",
+			"services": [
+				"GroupPermissionsLookup"
+			]
+		}
+	},
+	"Hooks": {
+		"BeforeCreateEchoEvent": "EchoHooks"
+	},
 	"SpecialPages": {
 		"VersionWatch": {
 			"class": "MediaWiki\\Extension\\VersionWatch\\Specials\\SpecialVersionWatch",
@@ -46,6 +57,10 @@
 		"sysop": {
 			"versionwatch": true
 		}
+	},
+	"DefaultUserOptions": {
+		"echo-subscriptions-web-versionwatch": true,
+		"echo-subscriptions-email-versionwatch": true
 	},
 	"ResourceFileModulePaths": {
 		"localBasePath": "modules",

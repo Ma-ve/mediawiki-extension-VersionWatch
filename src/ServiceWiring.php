@@ -2,6 +2,7 @@
 
 use MediaWiki\Extension\VersionWatch\CheckRunner;
 use MediaWiki\Extension\VersionWatch\InstalledComponents;
+use MediaWiki\Extension\VersionWatch\Notifications\UpdateNotifier;
 use MediaWiki\Extension\VersionWatch\ReportStore;
 use MediaWiki\Extension\VersionWatch\RepositoryResolver;
 use MediaWiki\Extension\VersionWatch\RepositorySettings;
@@ -20,7 +21,8 @@ return [
 	'VersionWatch.CheckRunner' => static function ( MediaWikiServices $services ): CheckRunner {
 		return new CheckRunner(
 			$services->get( 'VersionWatch.VersionChecker' ),
-			$services->get( 'VersionWatch.ReportStore' )
+			$services->get( 'VersionWatch.ReportStore' ),
+			ExtensionRegistry::getInstance()->isLoaded( 'Echo' ) ? new UpdateNotifier() : null
 		);
 	},
 
