@@ -126,7 +126,7 @@ abstract class GitSource {
 		if ( $component->commit !== null && $compareResponse !== null ) {
 			$behind = $this->parseCompare( $repository, $component->commit, $compareResponse );
 			return $this->evaluateCommits(
-				$component, $repository, $head, $behind, $this->getUpstreamVersion( $manifestResponse )
+				$component, $repository, $head, $behind, $this->getUpstreamManifest( $manifestResponse )
 			);
 		}
 		if ( $component->version !== null && $manifestResponse !== null ) {
@@ -136,19 +136,18 @@ abstract class GitSource {
 	}
 
 	/**
-	 * The version on the branch, for display only: a git checkout is compared by commit,
-	 * and many extensions do not declare a version.
+	 * The manifest on the branch of a git checkout. It is only informational, since a
+	 * checkout is compared by commit, so it may be missing.
 	 */
-	private function getUpstreamVersion( ?array $manifestResponse ): ?string {
+	private function getUpstreamManifest( ?array $manifestResponse ): array {
 		if ( $manifestResponse === null ) {
-			return null;
+			return [];
 		}
 		try {
-			$version = $this->parseManifest( $manifestResponse )['version'] ?? null;
+			return $this->parseManifest( $manifestResponse );
 		} catch ( LookupFailure ) {
-			return null;
+			return [];
 		}
-		return is_string( $version ) ? $version : null;
 	}
 
 	private function evaluateCommits(
@@ -156,8 +155,9 @@ abstract class GitSource {
 		Repository $repository,
 		array $head,
 		array $behind,
-		?string $upstreamVersion
+		array $manifest
 	): CheckResult {
+		$upstreamVersion = is_string( $manifest['version'] ?? null ) ? $manifest['version'] : null;
 		$counted = array_values( array_filter(
 			$behind['commits'],
 			fn ( array $commit ) => !$this->isIgnored( $commit )
