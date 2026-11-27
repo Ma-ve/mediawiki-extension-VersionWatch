@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       bump:
-        description: Part of the version to increment
+        description: Part of the version to increment, or none to release the version in extension.json as it is
         type: choice
-        options: [ patch, minor, major ]
+        options: [ patch, minor, major, none ]
         default: patch
 
 permissions:
@@ -44,7 +44,13 @@ jobs:
             major) version="$((major + 1)).0.0" ;;
             minor) version="$major.$((minor + 1)).0" ;;
             patch) version="$major.$minor.$((patch + 1))" ;;
+            none) version="$current" ;;
           esac
+          # The checkout has no tags, so ask the remote.
+          if [ -n "$(git ls-remote --tags origin "refs/tags/v$version")" ]; then
+            echo "::error::Version $version has already been released"
+            exit 1
+          fi
           # Edit the line in place rather than through jq, to keep the file's formatting.
           sed -i "s/\"version\": \"$current\"/\"version\": \"$version\"/" extension.json
           if [ "$(jq -r .version extension.json)" != "$version" ]; then
@@ -59,7 +65,10 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -am "chore: release $VERSION"
+          # Without a bump there is nothing to commit; the tag goes on the current commit.
+          if ! git diff --quiet extension.json; then
+            git commit -am "chore: release $VERSION"
+          fi
           git tag -a "v$VERSION" -m "VersionWatch $VERSION"
           git push origin HEAD:main "v$VERSION"
 
