@@ -103,5 +103,14 @@
 	"versionwatch-note-no-upstream-version": "Shown when the upstream extension.json or skin.json has no version to compare with.",
 	"versionwatch-note-github-rate-limit": "Do not translate <code>$wgVersionWatchGitHubToken</code>.",
 	"right-versionwatch": "{{doc-right|versionwatch}}",
-	"action-versionwatch": "{{doc-action|versionwatch}}"
+	"action-versionwatch": "{{doc-action|versionwatch}}",
+	"grant-versionwatch": "{{doc-grant|versionwatch}}",
+	"apihelp-query+versionwatch-summary": "{{doc-apihelp-summary|query+versionwatch}}",
+	"apihelp-query+versionwatch-param-prop": "{{doc-apihelp-param|query+versionwatch|prop}}",
+	"apihelp-query+versionwatch-paramvalue-prop-summary": "{{doc-apihelp-paramvalue|query+versionwatch|prop|summary}}",
+	"apihelp-query+versionwatch-paramvalue-prop-components": "{{doc-apihelp-paramvalue|query+versionwatch|prop|components}}",
+	"apihelp-query+versionwatch-paramvalue-prop-upgrade": "{{doc-apihelp-paramvalue|query+versionwatch|prop|upgrade}}",
+	"apihelp-query+versionwatch-example-summary": "{{doc-apihelp-example|query+versionwatch}}",
+	"apihelp-query+versionwatch-example-all": "{{doc-apihelp-example|query+versionwatch}}",
+	"apiwarn-versionwatch-noreport": "{{doc-apimsg|apiwarn-versionwatch-noreport}}"
 }

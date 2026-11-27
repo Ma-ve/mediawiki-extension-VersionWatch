@@ -103,5 +103,14 @@
 	"versionwatch-note-no-upstream-version": "The upstream branch declares no version to compare with.",
 	"versionwatch-note-github-rate-limit": "The GitHub rate limit was reached. Set <code>$wgVersionWatchGitHubToken</code> to raise it.",
 	"right-versionwatch": "View and run update checks for installed software",
-	"action-versionwatch": "view and run update checks for installed software"
+	"action-versionwatch": "view and run update checks for installed software",
+	"grant-versionwatch": "View the update status of installed software",
+	"apihelp-query+versionwatch-summary": "Get the latest update report of [[Special:VersionWatch]]. It does not run a new check.",
+	"apihelp-query+versionwatch-param-prop": "Which parts of the report to get.",
+	"apihelp-query+versionwatch-paramvalue-prop-summary": "How many components there are per status, and how many need attention.",
+	"apihelp-query+versionwatch-paramvalue-prop-components": "The status of MediaWiki, PHP, the database server, and each extension and skin.",
+	"apihelp-query+versionwatch-paramvalue-prop-upgrade": "Whether the extensions and skins are ready for the newest MediaWiki release, if that is on a newer release branch.",
+	"apihelp-query+versionwatch-example-summary": "Check whether anything needs attention.",
+	"apihelp-query+versionwatch-example-all": "Get the whole report.",
+	"apiwarn-versionwatch-noreport": "No check has run yet."
 }

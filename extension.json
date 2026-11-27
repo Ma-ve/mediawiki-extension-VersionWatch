@@ -50,6 +50,14 @@
 			]
 		}
 	},
+	"APIMetaModules": {
+		"versionwatch": {
+			"class": "MediaWiki\\Extension\\VersionWatch\\Api\\ApiQueryVersionWatch",
+			"services": [
+				"VersionWatch.ReportStore"
+			]
+		}
+	},
 	"AvailableRights": [
 		"versionwatch"
 	],
@@ -57,6 +65,17 @@
 		"sysop": {
 			"versionwatch": true
 		}
+	},
+	"GrantPermissions": {
+		"versionwatch": {
+			"versionwatch": true
+		}
+	},
+	"GrantPermissionGroups": {
+		"versionwatch": "administration"
+	},
+	"GrantRiskGroups": {
+		"versionwatch": "low"
 	},
 	"DefaultUserOptions": {
 		"echo-subscriptions-web-versionwatch": true,
