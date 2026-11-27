@@ -152,4 +152,62 @@ class VersionCheckerTest extends MediaWikiUnitTestCase {
 		$this->assertSame( 'versionwatch-note-part-of', $result->note );
 		$this->assertSame( [ 'ConfirmEdit' ], $result->noteParams );
 	}
+
+	/**
+	 * @param CheckResult $coreResult What the release cycle check found for MediaWiki
+	 * @param array|null $securityFixes What GerritSource::getCoreSecurityFixes() returns
+	 * @return CheckResult The result for MediaWiki in the report
+	 */
+	private function checkCore( CheckResult $coreResult, ?array $securityFixes ): CheckResult {
+		$installedComponents = $this->createMock( InstalledComponents::class );
+		$installedComponents->method( 'get' )->willReturn( [ $coreResult->component ] );
+		$repositorySettings = $this->createMock( RepositorySettings::class );
+		$repositorySettings->method( 'getResolver' )->willReturn( new RepositoryResolver( [], 'REL1_43' ) );
+		$releaseCycleSource = $this->createMock( ReleaseCycleSource::class );
+		$releaseCycleSource->method( 'check' )->willReturn( [ $coreResult ] );
+		$gerritSource = $this->createMock( GerritSource::class );
+		$gerritSource->method( 'check' )->willReturn( [] );
+		$gerritSource->method( 'getCoreSecurityFixes' )->with( '1.43.12', '1.43.13' )->willReturn( $securityFixes );
+
+		$report = ( new VersionChecker(
+			$installedComponents,
+			$repositorySettings,
+			$releaseCycleSource,
+			$gerritSource,
+			$this->createMock( GitHubSource::class )
+		) )->run();
+		return $report->results[0];
+	}
+
+	public function testCoreReleaseWithSecurityFixes() {
+		$core = new Component( Component::CORE, 'MediaWiki', '1.43.12' );
+		$fix = [
+			'sha' => self::CITE_COMMIT,
+			'subject' => 'SECURITY: Fix',
+			'url' => 'https://example.org',
+			'security' => true,
+		];
+
+		$result = $this->checkCore(
+			new CheckResult( component: $core, status: CheckResult::OUTDATED, latest: '1.43.13', eol: '2027-12-31' ),
+			[ $fix ]
+		);
+
+		$this->assertSame( CheckResult::SECURITY, $result->status );
+		$this->assertSame( 'versionwatch-note-core-security', $result->note );
+		$this->assertSame( [ '1.43.13', 1 ], $result->noteParams );
+		$this->assertSame( [ $fix ], $result->changes );
+		$this->assertSame( '2027-12-31', $result->eol );
+	}
+
+	public function testCoreReleaseWithoutSecurityFixesStaysOutdated() {
+		$core = new Component( Component::CORE, 'MediaWiki', '1.43.12' );
+
+		$result = $this->checkCore(
+			new CheckResult( component: $core, status: CheckResult::OUTDATED, latest: '1.43.13' ),
+			[]
+		);
+
+		$this->assertSame( CheckResult::OUTDATED, $result->status );
+	}
 }

@@ -254,4 +254,60 @@ class GerritSourceTest extends MediaWikiUnitTestCase {
 			$source->getBundledCommits( '1.44.0-alpha' )
 		);
 	}
+
+	public function testSecurityFixRaisesStatusAndIsListedFirst() {
+		$result = $this->checkOne( self::gitCheckout(), [
+			self::HEAD_URL => self::gitilesJson( self::HEAD_RESPONSE ),
+			self::LOG_URL => self::logWithFiles(
+				[ 'Umherirrender', [ 'src/Hooks.php' ], 'Use strict comparison' ],
+				[ 'Translation updater bot', [ 'i18n/nl.json' ], 'Localisation updates' ],
+				[ 'Reedy', [ 'src/Api/ApiEchoNotifications.php' ], "SECURITY: Check read permission\n\nBug: T1" ]
+			),
+		] );
+
+		$this->assertSame( CheckResult::SECURITY, $result->status );
+		$this->assertSame( 'versionwatch-note-security-changes', $result->note );
+		$this->assertSame( [ 2, 'REL1_43', 1 ], $result->noteParams );
+		$this->assertSame(
+			[ 'SECURITY: Check read permission', 'Use strict comparison' ],
+			array_column( $result->changes, 'subject' ),
+			'Security fixes come first; ignored commits are not listed'
+		);
+		$this->assertTrue( $result->changes[0]['security'] );
+		$this->assertSame( self::BASE . '+/' . sha1( 'commit 2' ), $result->changes[0]['url'] );
+		$this->assertSame( self::BASE . '+log/' . self::LOCAL_COMMIT . '..REL1_43', $result->changesUrl );
+	}
+
+	public function testNoChangesUrlWhenUpToDate() {
+		$result = $this->checkOne( self::gitCheckout(), [
+			self::HEAD_URL => self::gitilesJson( self::HEAD_RESPONSE ),
+			self::LOG_URL => self::logOf( 'Translation updater bot' ),
+		] );
+
+		$this->assertSame( [], $result->changes );
+		$this->assertNull( $result->changesUrl );
+	}
+
+	public function testCoreSecurityFixes() {
+		$url = 'https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/core/'
+			. '+log/refs/tags/1.43.12..refs/tags/1.43.13?format=JSON&n=10000';
+		$source = new GerritSource( $this->newHttpRequestFactory( [
+			$url => self::logWithFiles(
+				[ 'Reedy', [ 'includes/Defines.php' ], 'Release 1.43.13' ],
+				[ 'Reedy', [ 'includes/Title/Title.php' ], 'SECURITY: Title: Encode leading slash' ]
+			),
+		] ), [] );
+
+		$fixes = $source->getCoreSecurityFixes( '1.43.12', '1.43.13' );
+
+		$this->assertSame( [ 'SECURITY: Title: Encode leading slash' ], array_column( $fixes, 'subject' ) );
+	}
+
+	public function testCoreSecurityFixesWithoutReleaseTag() {
+		$url = 'https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/core/'
+			. '+log/refs/tags/1.44.0-alpha..refs/tags/1.43.13?format=JSON&n=10000';
+		$source = new GerritSource( $this->newHttpRequestFactory( [ $url => [ 'code' => 404 ] ] ), [] );
+
+		$this->assertNull( $source->getCoreSecurityFixes( '1.44.0-alpha', '1.43.13' ) );
+	}
 }

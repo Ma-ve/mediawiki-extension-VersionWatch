@@ -25,13 +25,14 @@ class ReportTest extends MediaWikiUnitTestCase {
 			self::result( 'Validator', CheckResult::UNKNOWN ),
 			self::result( 'Arrays', CheckResult::OUTDATED ),
 			self::result( 'MaveVariables', CheckResult::SKIPPED ),
+			self::result( 'ConfirmEdit', CheckResult::SECURITY ),
 		] );
 
 		$names = array_map(
 			static fn ( CheckResult $r ) => $r->component->name,
 			$report->getSortedResults()
 		);
-		$this->assertSame( [ 'Arrays', 'echo', 'Validator', 'ReplaceText', 'MaveVariables' ], $names );
+		$this->assertSame( [ 'ConfirmEdit', 'Arrays', 'echo', 'Validator', 'ReplaceText', 'MaveVariables' ], $names );
 	}
 
 	public function testArrayRoundTrip() {

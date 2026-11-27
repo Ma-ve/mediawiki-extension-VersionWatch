@@ -34,6 +34,9 @@ trait MockHttpTrait {
 			}
 			return $requests;
 		} );
+		$client->method( 'run' )->willReturnCallback(
+			static fn ( array $request ) => $client->runMulti( [ $request ] )[0]['response']
+		);
 
 		$factory = $this->createMock( HttpRequestFactory::class );
 		$factory->method( 'createMultiClient' )->willReturn( $client );

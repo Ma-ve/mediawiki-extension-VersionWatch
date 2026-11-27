@@ -131,4 +131,27 @@ class GitHubSourceTest extends MediaWikiUnitTestCase {
 		$this->assertSame( 'versionwatch-note-repo-not-found', $result->note );
 		$this->assertSame( [ 'example/GTag', 'github.com' ], $result->noteParams );
 	}
+
+	public function testSecurityFixInCommitMessage() {
+		$result = $this->check( [
+			self::HEAD_URL => self::json( self::HEAD_RESPONSE ),
+			self::COMPARE_URL => self::json( [
+				'ahead_by' => 1,
+				'commits' => [ [
+					'sha' => sha1( 'fix' ),
+					'commit' => [
+						'message' => "SECURITY: Escape the tracking ID\n\nDetails",
+						'author' => [ 'name' => 'Owner' ],
+					],
+				] ],
+			] ),
+		] );
+
+		$this->assertSame( CheckResult::SECURITY, $result->status );
+		$this->assertSame( 'https://github.com/example/GTag/commit/' . sha1( 'fix' ), $result->changes[0]['url'] );
+		$this->assertSame(
+			'https://github.com/example/GTag/compare/' . self::LOCAL_COMMIT . '...HEAD',
+			$result->changesUrl
+		);
+	}
 }
