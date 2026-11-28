@@ -73,6 +73,7 @@ class GitHubSourceTest extends MediaWikiUnitTestCase {
 		$this->assertNull( $result->latest );
 		$this->assertSame( self::HEAD_RESPONSE['sha'], $result->latestCommit );
 		$this->assertSame( '20261101120000', $result->latestDate );
+		$this->assertSame( 'versionwatch-note-commits-behind-default', $result->note, 'Not "the HEAD branch"' );
 		$this->assertSame( [ 298, 'HEAD' ], $result->noteParams );
 	}
 

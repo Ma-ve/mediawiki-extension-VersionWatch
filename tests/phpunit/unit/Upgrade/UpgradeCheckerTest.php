@@ -141,6 +141,7 @@ class UpgradeCheckerTest extends MediaWikiUnitTestCase {
 		);
 
 		$this->assertSame( UpgradeResult::READY, self::byName( $report )['GTag']->status );
+		$this->assertSame( 'versionwatch-upgrade-note-ready-default', self::byName( $report )['GTag']->note );
 		$this->assertSame( 'HEAD', $this->requestedBranches['GTag'] );
 	}
 

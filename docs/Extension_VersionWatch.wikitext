@@ -39,6 +39,7 @@ It is meant for wikis that are not run from a deployment pipeline, such as wikis
 
 == Installation ==
 {{ExtensionInstall
+|registration=required
 |download-link=[https://github.com/Ma-ve/mediawiki-extension-VersionWatch/releases Download]
 |custom-steps=* Schedule a daily check, for example with cron:
 *: <code>php maintenance/run.php VersionWatch:checkVersions --problems-only</code>
@@ -49,7 +50,7 @@ It is meant for wikis that are not run from a deployment pipeline, such as wikis
 Open [[Special:VersionWatch]] to see the latest report, or use ''Check now'' to run a new check. The page has a table for the platform (MediaWiki, PHP and the database server), one for extensions and one for skins, followed by whether the wiki is ready for the newest MediaWiki release.
 
 === Where extensions are looked up ===
-Extensions and skins are looked up on Wikimedia Gerrit, on the release branch matching the installed MediaWiki, such as <code>REL1_43</code>. For an extension hosted on GitHub, maintained on another branch, or without an upstream, use the ''change'' link in the Repository column. Settings are kept as JSON on <code>MediaWiki:VersionWatch.json</code>, so changes have page history and can be reverted.
+Extensions and skins are looked up on Wikimedia Gerrit, on the release branch matching the installed MediaWiki, such as <code>REL1_43</code>; VersionWatch itself is looked up on GitHub. For an extension hosted on GitHub, maintained on another branch, or without an upstream, use the ''change'' link in the Repository column. Settings are kept as JSON on <code>MediaWiki:VersionWatch.json</code>, so changes have page history and can be reverted.
 
 == Configuration ==
 {| class="wikitable"

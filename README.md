@@ -12,6 +12,13 @@ MediaWiki itself, PHP, the database server, and every installed extension and sk
 Results are shown on `Special:VersionWatch` (sysops only), printed by a maintenance script
 that is meant to run from cron, and available through the API.
 
+![Special:VersionWatch with a MediaWiki security update and its fixes](docs/screenshots/overview.png)
+
+![The maintenance script reporting a security fix from cron](docs/screenshots/cron-output.png)
+
+More screenshots are in [`docs/screenshots`](docs/screenshots). They come from
+[an example page](docs/example/versionwatch-example.html) with sample data.
+
 Requires MediaWiki 1.43 or later.
 
 ## Installation
@@ -105,7 +112,8 @@ preferences under *Software updates*. Without Echo, nothing changes.
 ## Where extensions are looked up
 
 By default an extension or skin is looked up on Wikimedia Gerrit, on the release branch
-matching your MediaWiki version. For anything else, such as an extension hosted on GitHub,
+matching your MediaWiki version. VersionWatch itself is the exception: it is looked up in its
+GitHub repository. For anything else, such as an extension hosted on GitHub,
 one that is only maintained on master, or local code without an upstream, use the *change*
 link in the Repository column of `Special:VersionWatch`. The details column says when that
 is needed.

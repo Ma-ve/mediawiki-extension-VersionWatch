@@ -13,6 +13,14 @@ class RepositoryResolver {
 	private const KEYS = [ Repository::GERRIT, Repository::GITHUB, 'branch' ];
 
 	/**
+	 * Repositories of extensions that are not on Wikimedia Gerrit, used when the
+	 * settings name no repository for them.
+	 */
+	private const KNOWN = [
+		'VersionWatch' => [ Repository::GITHUB => 'Ma-ve/mediawiki-extension-VersionWatch' ],
+	];
+
+	/**
 	 * @param array<string,mixed> $settings Settings keyed by extension or skin name
 	 * @param string $releaseBranch Branch to use for Gerrit projects without a setting
 	 */
@@ -43,6 +51,9 @@ class RepositoryResolver {
 			return null;
 		}
 		self::validate( $setting );
+		if ( !isset( $setting[Repository::GERRIT] ) && !isset( $setting[Repository::GITHUB] ) ) {
+			$setting += $this->getKnown( $component );
+		}
 
 		if ( isset( $setting[Repository::GITHUB] ) ) {
 			return new Repository( Repository::GITHUB, $setting[Repository::GITHUB], $setting['branch'] ?? 'HEAD' );
@@ -57,7 +68,16 @@ class RepositoryResolver {
 	}
 
 	/**
-	 * Where an extension or skin is looked up when nothing is configured for it.
+	 * The repository of an extension known not to be on Wikimedia Gerrit.
+	 *
+	 * @return array<string,string> A setting, or an empty array if the extension is not known
+	 */
+	public function getKnown( Component $component ): array {
+		return $component->type === Component::EXTENSION ? self::KNOWN[$component->name] ?? [] : [];
+	}
+
+	/**
+	 * Where on Wikimedia Gerrit an extension or skin is looked up when nothing is configured for it.
 	 */
 	public function getDefault( Component $component ): Repository {
 		$path = $component->type === Component::SKIN

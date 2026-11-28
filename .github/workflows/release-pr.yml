@@ -1,0 +1,75 @@
+name: Prepare release
+
+# Opens a pull request that bumps the version in extension.json. Merging it publishes the
+# release (see release.yml).
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Part of the version to increment
+        type: choice
+        options: [ patch, minor, major ]
+        default: patch
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release
+
+jobs:
+  pull-request:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Bump version in extension.json
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          current=$(jq -r .version extension.json)
+          IFS=. read -r major minor patch <<< "$current"
+          case "$BUMP" in
+            major) version="$((major + 1)).0.0" ;;
+            minor) version="$major.$((minor + 1)).0" ;;
+            patch) version="$major.$minor.$((patch + 1))" ;;
+          esac
+          # The checkout has no tags, so ask the remote.
+          if [ -n "$(git ls-remote --tags origin "refs/tags/v$version")" ]; then
+            echo "::error::Version $version has already been released"
+            exit 1
+          fi
+          # Edit the line in place rather than through jq, to keep the file's formatting.
+          sed -i "s/\"version\": \"$current\"/\"version\": \"$version\"/" extension.json
+          if [ "$(jq -r .version extension.json)" != "$version" ]; then
+            echo "::error::Could not set the version in extension.json to $version"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Push the release branch
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "release/$VERSION"
+          git commit -am "chore: release $VERSION"
+          git push origin "release/$VERSION"
+
+      - name: Open the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh pr create --base main --head "release/$VERSION" \
+            --title "chore: release $VERSION" \
+            --body "Merging this publishes VersionWatch $VERSION as a GitHub release."
+          # Pull requests opened with this token do not start other workflows, so start the
+          # tests the pull request needs by hand.
+          gh workflow run test.yml --ref "release/$VERSION"

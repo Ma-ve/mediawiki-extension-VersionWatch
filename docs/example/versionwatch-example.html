@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Version watch - Example Wiki</title>
+<!-- Example of Special:VersionWatch with sample data, for screenshots. The content was rendered
+     by the extension itself; the surrounding page only imitates the Vector 2022 skin. -->
+<style>
+:root { --color-base: #202122; --border: #a2a9b1; --border-subtle: #c8ccd1; --link: #36c; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #fff; color: var(--color-base); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Lato, "Helvetica Neue", Arial, sans-serif; font-size: 16px; line-height: 1.6; }
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+a.external { padding-right: 13px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%2336c' d='M6 1h5v5L8.86 3.85 4.7 8 4 7.3l4.15-4.16zM2 3h2v1H2v6h6V8h1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1'/%3E%3C/svg%3E") center right no-repeat; }
+.vector-header { display: flex; align-items: center; gap: 24px; max-width: 1596px; margin: 0 auto; padding: 8px 24px; height: 60px; }
+.vector-menu-icon { width: 20px; height: 14px; border-top: 2px solid #202122; border-bottom: 2px solid #202122; position: relative; }
+.vector-menu-icon::after { content: ""; position: absolute; left: 0; right: 0; top: 4px; border-top: 2px solid #202122; }
+.wiki-logo { display: flex; align-items: center; gap: 10px; color: var(--color-base); font-family: "Linux Libertine", "Georgia", "Times", serif; font-size: 22px; }
+.wiki-logo span.mark { width: 34px; height: 34px; border-radius: 50%; background: #36c; color: #fff; display: grid; place-items: center; font-family: sans-serif; font-size: 18px; font-weight: 700; }
+.search { flex: 0 1 460px; height: 32px; border: 1px solid var(--border); border-radius: 2px; padding: 4px 10px; color: #72777d; font-size: 14px; }
+.user { margin-left: auto; font-size: 14px; display: flex; gap: 18px; color: #54595d; }
+.page { max-width: 1596px; margin: 0 auto; padding: 0 24px 48px; display: grid; grid-template-columns: 176px 1fr; gap: 32px; }
+.sidebar { font-size: 14px; padding-top: 18px; }
+.sidebar h3 { font-size: 12px; color: #54595d; font-weight: normal; margin: 0 0 6px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 4px; }
+.sidebar ul { list-style: none; padding: 0; margin: 0 0 18px; }
+.sidebar li { padding: 3px 0; }
+.content { min-width: 0; }
+h1.firstHeading { font-family: "Linux Libertine", "Georgia", "Times", serif; font-weight: normal; font-size: 28.8px; margin: 14px 0 0; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+.tabs { display: flex; justify-content: space-between; font-size: 14px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 12px; }
+.tabs span { display: inline-block; padding: 6px 0; margin-right: 16px; }
+.tabs .selected { border-bottom: 2px solid #202122; }
+.mw-body-content { font-size: 14px; line-height: 1.6; }
+.mw-body-content h2 { font-family: "Linux Libertine", "Georgia", "Times", serif; font-weight: normal; font-size: 1.5em; margin: 1em 0 0.25em; padding-bottom: 2px; border-bottom: 1px solid var(--border); }
+.mw-body-content p { margin: 0.5em 0; }
+.wikitable { background: #f8f9fa; color: #202122; margin: 1em 0; border: 1px solid var(--border); border-collapse: collapse; width: 100%; }
+.wikitable > thead > tr > th, .wikitable > tbody > tr > td { border: 1px solid var(--border); padding: 0.2em 0.4em; }
+.wikitable > thead > tr > th { background: #eaecf0; text-align: center; font-weight: bold; }
+.wikitable td { background: #fff; }
+.wikitable ul { margin: 0.3em 0 0.3em 1.6em; padding: 0; }
+.wikitable details summary { color: var(--link); }
+.mw-htmlform-submit button { font: inherit; font-weight: bold; font-size: 14px; color: #fff; background: #36c; border: 1px solid #36c; border-radius: 2px; padding: 5px 12px; cursor: pointer; }
+.mw-htmlform-submit .oo-ui-iconElement-icon, .mw-htmlform-submit .oo-ui-indicatorElement-indicator { display: none; }
+.mw-specialpage-summary p { margin-top: 0; }
+/* Extension styles, compiled by ResourceLoader */
+/* stylelint-disable stylistic/indentation */
+.ext-versionwatch-table td {
+  vertical-align: top;
+}
+.ext-versionwatch-status {
+  display: inline-block;
+  padding: 0 8px;
+  border-radius: 0;
+  white-space: nowrap;
+}
+.ext-versionwatch-status-current {
+  background-color: #d5fdf4;
+}
+.ext-versionwatch-status-outdated {
+  background-color: #fef6e7;
+}
+.ext-versionwatch-status-security,
+.ext-versionwatch-status-unsupported {
+  background-color: #fee7e6;
+}
+.ext-versionwatch-status-security {
+  font-weight: 700;
+}
+.ext-versionwatch-status-unknown,
+.ext-versionwatch-status-skipped {
+  background-color: #eee;
+}
+.ext-versionwatch-upgrade-ready,
+.ext-versionwatch-upgrade-bundled {
+  background-color: #d5fdf4;
+}
+.ext-versionwatch-upgrade-no-branch,
+.ext-versionwatch-upgrade-incompatible {
+  background-color: #fee7e6;
+}
+.ext-versionwatch-upgrade-unknown,
+.ext-versionwatch-upgrade-skipped {
+  background-color: #eee;
+}
+.ext-versionwatch-changes {
+  margin-top: 4px;
+}
+.ext-versionwatch-changes summary {
+  cursor: pointer;
+}
+.ext-versionwatch-changes ul {
+  margin-top: 0;
+  font-size: 0.875em;
+}
+.ext-versionwatch-requirement {
+  font-weight: 700;
+}
+
+</style>
+</head>
+<body>
+<header class="vector-header">
+	<div class="vector-menu-icon"></div>
+	<a class="wiki-logo" href="#"><span class="mark">E</span>Example Wiki</a>
+	<div class="search">Search Example Wiki</div>
+	<div class="user"><a href="#">Admin</a><span>Talk</span><span>Preferences</span><span>Log out</span></div>
+</header>
+<div class="page">
+	<nav class="sidebar">
+		<h3>Navigation</h3>
+		<ul><li><a href="#">Main page</a></li><li><a href="#">Recent changes</a></li><li><a href="#">Random page</a></li></ul>
+		<h3>Tools</h3>
+		<ul><li><a href="#">Special pages</a></li><li><a href="#">Version</a></li><li><a href="#">Version watch</a></li></ul>
+	</nav>
+	<main class="content">
+		<h1 class="firstHeading">Version watch</h1>
+		<div class="tabs"><div><span class="selected">Special page</span></div><div><span>Tools</span></div></div>
+		<div class="mw-body-content">
+<div class="mw-specialpage-summary">
+<p>This page compares the installed software with its upstream releases and repositories. Results are stored, so they only change when a check runs.
+</p>
+</div><div class='mw-htmlform-ooui-wrapper oo-ui-layout oo-ui-panelLayout'><form action='/index.php/Special:VersionWatch' method='post' enctype='application/x-www-form-urlencoded' class='mw-htmlform mw-htmlform-ooui oo-ui-layout oo-ui-formLayout'><input type="hidden" value="Special:VersionWatch" name="title">
+<input id="wpEditToken" type="hidden" value="ff64a145c9890ca8fb19293e45b4ff096b097444+\" name="wpEditToken">
+<div class="mw-htmlform-submit-buttons">
+<span id='ooui-php-1' class='mw-htmlform-submit oo-ui-widget oo-ui-widget-enabled oo-ui-inputWidget oo-ui-buttonElement oo-ui-buttonElement-framed oo-ui-labelElement oo-ui-flaggedElement-primary oo-ui-flaggedElement-progressive oo-ui-buttonInputWidget' data-ooui='{"_":"OO.ui.ButtonInputWidget","type":"submit","value":"Check now","label":"Check now","flags":["primary","progressive"],"classes":["mw-htmlform-submit"]}'><button type='submit' tabindex='0' value='Check now' class='oo-ui-inputWidget-input oo-ui-buttonElement-button'><span class='oo-ui-iconElement-icon oo-ui-iconElement-noIcon oo-ui-image-invert'></span><span class='oo-ui-labelElement-label'>Check now</span><span class='oo-ui-indicatorElement-indicator oo-ui-indicatorElement-noIndicator oo-ui-image-invert'></span></button></span></div>
+</form></div><p>Last checked: 13:15, 27 November 2026.</p><p>6 components need attention, 3 of them for security fixes.</p><h2 id="platform">Platform</h2><table class="wikitable ext-versionwatch-table"><thead><tr><th>Name</th><th>Installed</th><th>Latest</th><th>Status</th><th>Details</th></tr></thead><tbody><tr><td>MediaWiki</td><td>1.43.10 (94a0426)</td><td>1.43.12 (20 November 2026)</td><td><span class="ext-versionwatch-status ext-versionwatch-status-security">Security update</span></td><td>MediaWiki 1.43.12 includes 13 security fixes.<details class="ext-versionwatch-changes" open><summary>Show changes</summary><ul><li><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/core/+/84c920b0a6f7d3e2b1c4a5d6e7f8091a2b3c4d5e" class="external" rel="nofollow">84c920b</a> SECURITY: Show request values literally in REST error messages</li><li><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/core/+/5fe47001b2c3d4e5f60718293a4b5c6d7e8f9012" class="external" rel="nofollow">5fe4700</a> SECURITY: Gate prop=pageprops on read permission</li><li><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/core/+/6b09eed1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7" class="external" rel="nofollow">6b09eed</a> SECURITY: Title: Encode leading slash in local URLs</li><li><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/core/+/76a57321d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7" class="external" rel="nofollow">76a5732</a> SECURITY: Enforce editmyprivateinfo on credential special pages</li><li><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/core/+/8b5d6891e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7" class="external" rel="nofollow">8b5d689</a> SECURITY: Check page read permission in ApiQueryRevisionsBase</li><li><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/core/+/ed10a821f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8" class="external" rel="nofollow">ed10a82</a> SECURITY: Sanitize the &#039;displaytitle&#039; page property on output</li></ul><p><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/core/+log/refs/tags/1.43.10..refs/tags/1.43.12" class="external" rel="nofollow">See all changes</a></p></details><p><a href="https://www.mediawiki.org/wiki/Download" class="external" rel="nofollow noopener" target="_blank">Download MediaWiki 1.43.12</a></p></td></tr><tr><td>MariaDB</td><td>10.11.14-MariaDB</td><td>10.11.20 (13 November 2026)</td><td><span class="ext-versionwatch-status ext-versionwatch-status-outdated">Update available</span></td><td>This release branch is supported until 2028-02-16.</td></tr><tr><td>PHP</td><td>8.3.29</td><td>8.3.29 (19 November 2026)</td><td><span class="ext-versionwatch-status ext-versionwatch-status-current">Up to date</span></td><td>This release branch is supported until 2027-12-31.</td></tr></tbody></table><h2 id="extensions">Extensions</h2><table class="wikitable ext-versionwatch-table"><thead><tr><th>Name</th><th>Installed</th><th>Latest</th><th>Status</th><th>Details</th><th>Repository</th></tr></thead><tbody><tr><td>ConfirmEdit</td><td>1.6.0 (7a994c1, 6 August 2024)</td><td>1.6.0 (d928e44, 24 November 2026)</td><td><span class="ext-versionwatch-status ext-versionwatch-status-security">Security update</span></td><td>36 newer changes on the REL1_43 branch, including a security fix.<details class="ext-versionwatch-changes" open><summary>Show changes</summary><ul><li><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/ConfirmEdit/+/d92c701ac1f50eb1624e9b061b096ff4c7169afd" class="external" rel="nofollow">d92c701</a> SECURITY: ApiFancyCaptchaReload: Reuse badcaptcha rate limit</li><li><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/ConfirmEdit/+/a4b81c20d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8" class="external" rel="nofollow">a4b81c2</a> Turnstile: Send the remote IP only when configured</li><li><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/ConfirmEdit/+/c7e91d30e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9" class="external" rel="nofollow">c7e91d3</a> QuestyCaptcha: Trim whitespace from answers</li><li><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/ConfirmEdit/+/f2a03e41f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0" class="external" rel="nofollow">f2a03e4</a> Fix PHP 8.3 deprecation in SimpleCaptcha</li></ul><p><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/ConfirmEdit/+log/7a994c1..REL1_43" class="external" rel="nofollow">See all changes</a></p></details><p><a href="https://www.mediawiki.org/wiki/Special:ExtensionDistributor?extdistname=ConfirmEdit&amp;extdistversion=REL1_43" class="external" rel="nofollow noopener" target="_blank">Download the update</a></p></td><td><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/ConfirmEdit/+/refs/heads/REL1_43" class="external" rel="nofollow">mediawiki/extensions/ConfirmEdit</a> (REL1_43) (<a href="/index.php/Special:VersionWatch/ConfirmEdit" title="Special:VersionWatch/ConfirmEdit">change</a>)</td></tr><tr><td>ConfirmEdit/Turnstile</td><td>–</td><td>1.6.0 (d928e44, 24 November 2026)</td><td><span class="ext-versionwatch-status ext-versionwatch-status-security">Security update</span></td><td>Part of ConfirmEdit, and updated together with it.</td><td>Same as ConfirmEdit</td></tr><tr><td>Echo</td><td>edd9090, 9 June 2022</td><td>f6d697b, 24 November 2026</td><td><span class="ext-versionwatch-status ext-versionwatch-status-outdated">Update available</span></td><td>214 newer changes on the REL1_43 branch.<details class="ext-versionwatch-changes"><summary>Show changes</summary><ul><li><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/Echo/+/b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0" class="external" rel="nofollow">b1c2d3e</a> Use the Codex icon for the notification badge</li></ul><p><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/Echo/+log/edd9090..REL1_43" class="external" rel="nofollow">See all changes</a></p></details><p><a href="https://www.mediawiki.org/wiki/Special:ExtensionDistributor?extdistname=Echo&amp;extdistversion=REL1_43" class="external" rel="nofollow noopener" target="_blank">Download the update</a></p></td><td><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/Echo/+/refs/heads/REL1_43" class="external" rel="nofollow">mediawiki/extensions/Echo</a> (REL1_43) (<a href="/index.php/Special:VersionWatch/Echo" title="Special:VersionWatch/Echo">change</a>)</td></tr><tr><td>ShoutWikiAds</td><td>0.4.8 (013c942, 16 June 2024)</td><td>0.4.8 (e48d6d6, 20 November 2026)</td><td><span class="ext-versionwatch-status ext-versionwatch-status-outdated">Update available</span></td><td>2 newer changes on the REL1_43 branch.<details class="ext-versionwatch-changes"><summary>Show changes</summary><ul><li><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/ShoutWikiAds/+/9d444d576562066d08cb15b7906c355a98711863" class="external" rel="nofollow">9d444d5</a> Add explicit parentheses around mixed boolean operator</li></ul><p><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/ShoutWikiAds/+log/013c942..REL1_43" class="external" rel="nofollow">See all changes</a></p></details><p><a href="https://www.mediawiki.org/wiki/Special:ExtensionDistributor?extdistname=ShoutWikiAds&amp;extdistversion=REL1_43" class="external" rel="nofollow noopener" target="_blank">Download the update</a></p></td><td><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/ShoutWikiAds/+/refs/heads/REL1_43" class="external" rel="nofollow">mediawiki/extensions/ShoutWikiAds</a> (REL1_43) (<a href="/index.php/Special:VersionWatch/ShoutWikiAds" title="Special:VersionWatch/ShoutWikiAds">change</a>)</td></tr><tr><td>Validator</td><td>0.5.1</td><td>–</td><td><span class="ext-versionwatch-status ext-versionwatch-status-unknown">Unknown</span></td><td>The upstream repository has no REL1_43 branch. The extension may be unmaintained, or use a different branch, which you can set with the change link.</td><td><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/Validator/+/refs/heads/REL1_43" class="external" rel="nofollow">mediawiki/extensions/Validator</a> (REL1_43) (<a href="/index.php/Special:VersionWatch/Validator" title="Special:VersionWatch/Validator">change</a>)</td></tr><tr><td>Cite</td><td>77ddf98, bundled with MediaWiki 1.43.10</td><td>6f5c7f9, 24 November 2026</td><td><span class="ext-versionwatch-status ext-versionwatch-status-current">Up to date</span></td><td>Only one newer change, which does not count as an update: a translation update or a change to development tools.</td><td><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/Cite/+/refs/heads/REL1_43" class="external" rel="nofollow">mediawiki/extensions/Cite</a> (REL1_43) (<a href="/index.php/Special:VersionWatch/Cite" title="Special:VersionWatch/Cite">change</a>)</td></tr><tr><td>ParserFunctions</td><td>1.6.1 (3566cc6, bundled with MediaWiki 1.43.10)</td><td>1.6.1 (3566cc6, 20 November 2026)</td><td><span class="ext-versionwatch-status ext-versionwatch-status-current">Up to date</span></td><td></td><td><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/ParserFunctions/+/refs/heads/master" class="external" rel="nofollow">mediawiki/extensions/ParserFunctions</a> (master) (<a href="/index.php/Special:VersionWatch/ParserFunctions" title="Special:VersionWatch/ParserFunctions">change</a>)</td></tr><tr><td>TabberNeue</td><td>4.1.1 (c3d4e5f, 12 November 2026)</td><td>4.1.1 (c3d4e5f, 12 November 2026)</td><td><span class="ext-versionwatch-status ext-versionwatch-status-current">Up to date</span></td><td></td><td><a href="https://github.com/StarCitizenTools/mediawiki-extensions-TabberNeue" class="external" rel="nofollow">StarCitizenTools/mediawiki-extensions-TabberNeue</a> (default branch) (<a href="/index.php/Special:VersionWatch/TabberNeue" title="Special:VersionWatch/TabberNeue">change</a>)</td></tr><tr><td>WikiEditor</td><td>0.5.4 (5a33aaa, bundled with MediaWiki 1.43.10)</td><td>0.5.4 (5a33aaa, 24 November 2026)</td><td><span class="ext-versionwatch-status ext-versionwatch-status-current">Up to date</span></td><td></td><td><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/WikiEditor/+/refs/heads/REL1_43" class="external" rel="nofollow">mediawiki/extensions/WikiEditor</a> (REL1_43) (<a href="/index.php/Special:VersionWatch/WikiEditor" title="Special:VersionWatch/WikiEditor">change</a>)</td></tr><tr><td>MyCustomTheme</td><td>1.2.0</td><td>–</td><td><span class="ext-versionwatch-status ext-versionwatch-status-skipped">Skipped</span></td><td></td><td>Not checked (<a href="/index.php/Special:VersionWatch/MyCustomTheme" title="Special:VersionWatch/MyCustomTheme">change</a>)</td></tr></tbody></table><h2 id="skins">Skins</h2><table class="wikitable ext-versionwatch-table"><thead><tr><th>Name</th><th>Installed</th><th>Latest</th><th>Status</th><th>Details</th><th>Repository</th></tr></thead><tbody><tr><td>MonoBook</td><td>424f896, bundled with MediaWiki 1.43.10</td><td>424f896, 24 November 2026</td><td><span class="ext-versionwatch-status ext-versionwatch-status-current">Up to date</span></td><td></td><td><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/skins/MonoBook/+/refs/heads/REL1_43" class="external" rel="nofollow">mediawiki/skins/MonoBook</a> (REL1_43) (<a href="/index.php/Special:VersionWatch/MonoBook" title="Special:VersionWatch/MonoBook">change</a>)</td></tr><tr><td>Vector</td><td>1.0.0 (a57e06f, bundled with MediaWiki 1.43.10)</td><td>1.0.0 (a57e06f, 24 November 2026)</td><td><span class="ext-versionwatch-status ext-versionwatch-status-current">Up to date</span></td><td></td><td><a href="https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/skins/Vector/+/refs/heads/REL1_43" class="external" rel="nofollow">mediawiki/skins/Vector</a> (REL1_43) (<a href="/index.php/Special:VersionWatch/Vector" title="Special:VersionWatch/Vector">change</a>)</td></tr></tbody></table><h2 id="upgrade">Upgrading to MediaWiki 1.46.3</h2><p>MediaWiki 1.46.3 is the newest release. It is supported until 31 July 2027. Your current version is supported for longer, until 31 December 2027. <span>It needs PHP &gt;=8.3.0, which this server has (8.3.29).</span></p><p>2 extensions or skins are not ready for MediaWiki 1.46.3.</p><table class="wikitable ext-versionwatch-table"><thead><tr><th>Name</th><th>Status</th><th>Details</th></tr></thead><tbody><tr><td>ShoutWikiAds</td><td><span class="ext-versionwatch-status ext-versionwatch-upgrade-incompatible">Incompatible</span></td><td><p class="ext-versionwatch-requirement">Needs PHP &gt;= 8.4; this wiki has 8.3.29.</p></td></tr><tr><td>Validator</td><td><span class="ext-versionwatch-status ext-versionwatch-upgrade-no-branch">Not available</span></td><td>There is no REL1_46 branch, so it is not maintained for MediaWiki 1.46.3. Look for a replacement before upgrading.</td></tr><tr><td>TabberNeue</td><td><span class="ext-versionwatch-status ext-versionwatch-upgrade-ready">Ready</span></td><td>Its default branch supports it.</td></tr><tr><td>Cite</td><td><span class="ext-versionwatch-status ext-versionwatch-upgrade-bundled">Included</span></td><td>Comes with MediaWiki 1.46.3.</td></tr><tr><td>ConfirmEdit</td><td><span class="ext-versionwatch-status ext-versionwatch-upgrade-bundled">Included</span></td><td>Comes with MediaWiki 1.46.3.</td></tr><tr><td>Echo</td><td><span class="ext-versionwatch-status ext-versionwatch-upgrade-bundled">Included</span></td><td>Comes with MediaWiki 1.46.3.</td></tr><tr><td>MyCustomTheme</td><td><span class="ext-versionwatch-status ext-versionwatch-upgrade-skipped">Skipped</span></td><td></td></tr></tbody></table>
+		</div>
+	</main>
+</div>
+</body>
+</html>

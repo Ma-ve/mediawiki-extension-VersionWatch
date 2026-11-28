@@ -52,6 +52,26 @@ class RepositoryResolverTest extends MediaWikiUnitTestCase {
 			new Component( Component::EXTENSION, 'GTag' ),
 			new Repository( Repository::GITHUB, 'example/GTag', 'HEAD' ),
 		];
+		yield 'VersionWatch defaults to GitHub' => [
+			[],
+			new Component( Component::EXTENSION, 'VersionWatch' ),
+			new Repository( Repository::GITHUB, 'Ma-ve/mediawiki-extension-VersionWatch', 'HEAD' ),
+		];
+		yield 'branch override keeps a known repository' => [
+			[ 'VersionWatch' => [ 'branch' => 'develop' ] ],
+			new Component( Component::EXTENSION, 'VersionWatch' ),
+			new Repository( Repository::GITHUB, 'Ma-ve/mediawiki-extension-VersionWatch', 'develop' ),
+		];
+		yield 'a setting replaces a known repository' => [
+			[ 'VersionWatch' => [ 'gerrit' => 'mediawiki/extensions/VersionWatch' ] ],
+			new Component( Component::EXTENSION, 'VersionWatch' ),
+			new Repository( Repository::GERRIT, 'mediawiki/extensions/VersionWatch', 'REL1_43' ),
+		];
+		yield 'known repositories are for extensions only' => [
+			[],
+			new Component( Component::SKIN, 'VersionWatch' ),
+			new Repository( Repository::GERRIT, 'mediawiki/skins/VersionWatch', 'REL1_43' ),
+		];
 		yield 'skipped' => [
 			[ 'MaveVariables' => false ],
 			new Component( Component::EXTENSION, 'MaveVariables' ),
