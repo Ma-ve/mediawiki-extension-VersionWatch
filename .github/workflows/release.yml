@@ -1,13 +1,10 @@
 name: Release
 
+# Publishes a release when a pull request from the Prepare release workflow is merged.
 on:
-  workflow_dispatch:
-    inputs:
-      bump:
-        description: Part of the version to increment, or none to release the version in extension.json as it is
-        type: choice
-        options: [ patch, minor, major, none ]
-        default: patch
+  pull_request:
+    types: [ closed ]
+    branches: [ main ]
 
 permissions:
   contents: write
@@ -17,60 +14,35 @@ concurrency:
 
 jobs:
   release:
+    if: >-
+      github.event.pull_request.merged &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.event.pull_request.head.ref, 'release/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
 
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          tools: composer
-          coverage: none
-
-      - run: composer install --no-progress
-
-      - run: composer test
-
-      - name: Bump version in extension.json
+      - name: Read the version
         id: version
-        env:
-          BUMP: ${{ inputs.bump }}
         run: |
-          current=$(jq -r .version extension.json)
-          IFS=. read -r major minor patch <<< "$current"
-          case "$BUMP" in
-            major) version="$((major + 1)).0.0" ;;
-            minor) version="$major.$((minor + 1)).0" ;;
-            patch) version="$major.$minor.$((patch + 1))" ;;
-            none) version="$current" ;;
-          esac
+          version=$(jq -r .version extension.json)
           # The checkout has no tags, so ask the remote.
           if [ -n "$(git ls-remote --tags origin "refs/tags/v$version")" ]; then
             echo "::error::Version $version has already been released"
             exit 1
           fi
-          # Edit the line in place rather than through jq, to keep the file's formatting.
-          sed -i "s/\"version\": \"$current\"/\"version\": \"$version\"/" extension.json
-          if [ "$(jq -r .version extension.json)" != "$version" ]; then
-            echo "::error::Could not set the version in extension.json to $version"
-            exit 1
-          fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-      - name: Commit and tag
+      - name: Tag
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          # Without a bump there is nothing to commit; the tag goes on the current commit.
-          if ! git diff --quiet extension.json; then
-            git commit -am "chore: release $VERSION"
-          fi
           git tag -a "v$VERSION" -m "VersionWatch $VERSION"
-          git push origin HEAD:main "v$VERSION"
+          git push origin "v$VERSION"
 
       - name: Package
         env:
@@ -93,3 +65,8 @@ jobs:
           gh release create "v$VERSION" "VersionWatch-$VERSION.zip" \
             --title "$VERSION" \
             --generate-notes
+
+      - name: Delete the release branch
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: git push origin --delete "$BRANCH" || true
